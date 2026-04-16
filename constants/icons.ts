@@ -10,6 +10,7 @@ export const icons = {
     store: "shopping-bag",
     book: "book",
     menu: "bars",
+    back: "arrow-left",
 } as const;
 
 

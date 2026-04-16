@@ -29,7 +29,7 @@ const TabLayout = () => {
             >
                 <FontAwesome
                     name={icon}
-                    size={isPlay ? 28 : 24}
+                    size={isPlay ? 35 : 25}
                     color={colors.background} />
             </View>
         </View>
@@ -41,9 +41,11 @@ const TabLayout = () => {
             tabBarShowLabel: false,
             tabBarStyle: {
                 position: 'absolute',
-                bottom: Math.max(insets.bottom, tabBar.horizontalInset),
+                // bottom: Math.max(insets.bottom, tabBar.horizontalInset),
+                bottom: -2,
                 height: tabBar.height,
-                marginHorizontal: tabBar.horizontalInset,
+                // marginHorizontal: tabBar.horizontalInset,
+                marginHorizontal: 0,
                 right: tabBar.horizontalInset,
                 borderRadius: tabBar.radius,
                 backgroundColor: colors.primary,
