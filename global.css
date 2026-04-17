@@ -46,7 +46,7 @@
 }
 
 @layer components {
-    .tabs-icon {
+    /* .tabs-icon {
         @apply size-12 items-center justify-center;
     }
 
@@ -68,5 +68,5 @@
 
     .tabs-glyph {
         @apply size-6;
-    }
+    } */
 }

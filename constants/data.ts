@@ -17,14 +17,14 @@ export const tabs = [
 ] as const;
 
 export const gameBG = [
-    {difficulty: 'easy', background: images.stacked_peaks_vertical},
-    {difficulty: 'medium', background: images.stacked_waves_vertical},
-    {difficulty: 'hard', background: images.layered_peaks_vertical},
+    { difficulty: 'easy', background: images.stacked_peaks_vertical },
+    { difficulty: 'medium', background: images.stacked_waves_vertical },
+    { difficulty: 'hard', background: images.layered_peaks_vertical },
 ]
 
 export const levels = [
-    { name: "Easy", difficulty: 1, background: images.stacked_peaks_horizontal, time: '1 min', hints: 3, freeHint: 1, locked: false},
-    { name: "Medium", difficulty: 2, background: images.stacked_waves_horizontal, time: '40 s', hints: 2, freeHint: 0, locked: true},
+    { name: "Easy", difficulty: 1, background: images.stacked_peaks_horizontal, time: '1 min', hints: 3, freeHint: 1, locked: false },
+    { name: "Medium", difficulty: 2, background: images.stacked_waves_horizontal, time: '40 s', hints: 2, freeHint: 0, locked: true },
     { name: "Hard", difficulty: 3, background: images.layered_peaks_horizontal, time: '30 s', hints: 1, freeHint: 0, locked: true },
 ]
 
@@ -35,9 +35,9 @@ export const gameAssets = [
 ]
 
 export const bugtongList = [
-    { id: 1, difficulty: 'easy', category: 'Parts of the body', question: "What is hand?", answer: "Hand", hint: ["Parts of the body", "Use to hold things", "H _ _ D"] },
-    { id: 2, difficulty: 'easy', category: 'Thing', question: "What is pencil?", answer: "Pencil", hint: ["Thing", "Use to write", "P _ N C _ L"] },
-    { id: 3, difficulty: 'easy', category: 'Food', question: "What is coconut?", answer: "Coconut", hint: ["Food", "Grows on trees", "C _ _ N _ T"] },
-    { id: 4, difficulty: 'easy', category: 'Food', question: "What is Rice?", answer: "Rice", hint: ["Food", "Grows in water", "R _ C _"] },
-    { id: 5, difficulty: 'easy', category: 'Parts of the body', question: "What is eyes?", answer: "Eyes", hint: ["Parts of the body", "Use to see", "E _ _ S"] }
-]
+    { id: 1, difficulty: 'easy', category: 'Parts of the body', question: "What is hand?", answer: "Hand", hint: [{ text: "Parts of the body", open: true }, { text: "Use to hold things", open: false }, { text: "H _ _ D", open: false }] },
+    { id: 2, difficulty: 'easy', category: 'Thing', question: "What is pencil?", answer: "Pencil", hint: [{ text: "Thing", open: true }, { text: "Use to write", open: false }, { text: "P _ N C _ L", open: false }] },
+    { id: 3, difficulty: 'easy', category: 'Food', question: "What is coconut?", answer: "Coconut", hint: [{ text: "Food", open: true }, { text: "Grows on trees", open: false }, { text: "C _ _ N _ T", open: false }] },
+    { id: 4, difficulty: 'easy', category: 'Food', question: "What is Rice?", answer: "Rice", hint: [{ text: "Food", open: true }, { text: "Grows in water", open: false }, { text: "R _ C _", open: false }] },
+    { id: 5, difficulty: 'easy', category: 'Parts of the body', question: "What is eyes?", answer: "Eyes", hint: [{ text: "Parts of the body", open: true }, { text: "Use to see", open: false }, { text: "E _ _ S", open: false }] }
+];
