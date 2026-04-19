@@ -73,7 +73,7 @@ export default function RootLayout() {
                     }}
                 >
                     <Stack.Screen
-                        name="game"
+                        name="index"
                         options={{
                             contentStyle: { backgroundColor: 'transparent' }
                         }}

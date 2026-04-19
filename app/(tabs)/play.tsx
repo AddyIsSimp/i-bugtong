@@ -18,7 +18,7 @@ export default function Play() {
     const handleLevelPress = (level: typeof levels[0]) => {
         if (!level.locked) {
             router.push({
-                pathname: "/game/game",
+                pathname: "/game",
                 params: {
                     levelName: level.name,
                     levelDifficulty: level.difficulty,
@@ -48,7 +48,7 @@ export default function Play() {
                             {gameAssets.map((asset) => (
                                 <View className="flex-row items-end justify-end gap-1 px-0 py-1" key={asset.name}>
                                     <Text className="text-sm text-primary">{asset.quantity}</Text>
-                                    <Image source={asset.icon} className="w-5 h-5" />
+                                    <Image source={asset.icon} className="w-5 h-5" style={{ width: 20, height: 20 }} />
                                 </View>))
                             }
                         </View>

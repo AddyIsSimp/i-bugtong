@@ -1,21 +1,23 @@
 import { FontAwesome } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { styled } from "nativewind";
 import { useRef, useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
 import CModal, { CModalRef } from '@/components/CModal';
+import CaptureModal from '@/components/CaptureModal';
 import { custom_icons } from "@/constants/custom_icons";
 import { bugtongList } from "@/constants/data";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
-export default function Game({ difficulty }: { difficulty: string }) {
+export default function Index({ difficulty }: { difficulty: string }) {
 
-    const modalRef = useRef<CModalRef>(null); //for CModal
+    const modalRef = useRef<CModalRef>(null);
+    const [captureModalVisible, setCaptureModalVisible] = useState(false);
+    const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const params = useLocalSearchParams();
-    const [modalVisible, setModalVisible] = useState(true);
 
     const getDifficultyString = (difficulty: number | string): string => {
         const diff = Number(difficulty);
@@ -28,8 +30,14 @@ export default function Game({ difficulty }: { difficulty: string }) {
     const difficultyString = getDifficultyString(params.levelDifficulty as string);
 
     const handleOpenCamera = () => {
-        router.push('/game/capture')
-    }
+        setCaptureModalVisible(true);
+    };
+
+    const handleImageCaptured = (imageUri: string) => {
+        setCapturedImage(imageUri);
+        console.log("Image captured:", imageUri);
+        // You can now use the captured image for your answer submission
+    };
 
     return (
         <>
@@ -76,8 +84,21 @@ export default function Game({ difficulty }: { difficulty: string }) {
                         ))}
                 </View>
 
+                {/* Display captured image preview */}
+                {capturedImage && (
+                    <View className="w-4/5 mt-4">
+                        <Image source={{ uri: capturedImage }} className="w-full h-48 rounded-lg" />
+                        <TouchableOpacity
+                            className="absolute top-2 right-2 bg-red-500 p-2 rounded-full"
+                            onPress={() => setCapturedImage(null)}
+                        >
+                            <FontAwesome name="times" size={16} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                )}
+
                 {/* GameActivity */}
-                <View className="absolute bottom-10 left-0 flex-row items-center justify-between w-full px-5">
+                <View className="absolute bottom-10 left-0 flex-row items-end justify-between w-full px-5">
                     <TouchableOpacity className="h-12 flex-row items-center gap-2 bg-background rounded-full px-5"
                         activeOpacity={0.8}>
                         <Text className="text-lg font-medium">Use</Text>
@@ -95,9 +116,15 @@ export default function Game({ difficulty }: { difficulty: string }) {
                 </View>
             </View>
 
+            {/* Capture Modal */}
+            <CaptureModal
+                visible={captureModalVisible}
+                onClose={() => setCaptureModalVisible(false)}
+                onImageCaptured={handleImageCaptured}
+            />
 
             {/* Game Info Modal */}
-            < CModal
+            <CModal
                 ref={modalRef}
                 closeOnBackdropPress={false}
                 animationType="fade"
@@ -131,7 +158,7 @@ export default function Game({ difficulty }: { difficulty: string }) {
                         </View>
                     </View>
                 </View>
-            </CModal >
+            </CModal>
         </>
     );
-};
+}
