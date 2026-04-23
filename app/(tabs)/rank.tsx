@@ -11,8 +11,7 @@ export default function Friends() {
     return (
         <SafeAreaView className="flex-1 bg-background p-5">
             <View className="flex-1">
-                <FontAwesome name={icons.back} size={24} color="colors.primary" style={{ transform: [{ scaleX: 1.5 }] }} />
-                <Text className="text-2xl font-bold text-primary">Game</Text>
+                <Text className="text-2xl font-bold text-primary">Leaderboard</Text>
             </View>
         </SafeAreaView>
     );

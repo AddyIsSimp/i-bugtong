@@ -1,3 +1,4 @@
+import { UserProvider } from '@/contexts/UserContext';
 import '@/global.css';
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
@@ -25,7 +26,10 @@ export default function RootLayout() {
 
   if (!fontsLoaded) return null;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <UserProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </UserProvider>);
 }
 
 

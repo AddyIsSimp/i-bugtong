@@ -6,6 +6,23 @@ declare global {
         focused: boolean,
         icon: ComponentProps<typeof FontAwesome>["name"];
     }
+
+    type Difficulty = 'easy' | 'medium' | 'hard'
+    
+    interface Hint {
+        text: string;
+        open: boolean;
+    }
+
+    interface BugtongProps {
+        id: number | string;
+        difficulty: Difficulty;
+        category: string;
+        question: string;
+        answer: string;
+        hint?: Hint[];
+        solved: boolean;
+    }
 }
 
 export {};

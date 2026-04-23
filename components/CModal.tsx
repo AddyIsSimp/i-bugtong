@@ -54,6 +54,7 @@ const CModal = forwardRef<CModalRef, CModalProps>(({
     }));
 
     const handleBackdropPress = () => {
+        console.log("Backdrop pressed", closeOnBackdropPress); // Debug log
         if (closeOnBackdropPress) {
             setModalVisible(false);
             onClose?.();
@@ -73,12 +74,20 @@ const CModal = forwardRef<CModalRef, CModalProps>(({
             }}>
 
             <TouchableWithoutFeedback onPress={handleBackdropPress}>
-                <View className={`absolute top-0 left-0 w-full h-full items-center justify-center bg-black/50 ${containerClassName}`}>
-                    <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                        <View className={` ${contentClassName}`}>
-                            {children}
-                        </View>
-                    </TouchableWithoutFeedback>
+                <View
+                    className={`absolute top-0 left-0 right-0 bottom-0 w-full h-full items-center justify-center bg-gray-900/80 ${containerClassName}`}
+                    style={{ flex: 1 }}
+                >
+                    {/* <TouchableWithoutFeedback 
+                        
+                        onPress={(e) => {
+                        e.stopPropagation();
+                        console.log("Content pressed - not closing");
+                    }}> */}
+                    <View className={contentClassName}>
+                        {children}
+                    </View>
+                    {/* </TouchableWithoutFeedback> */}
                 </View>
             </TouchableWithoutFeedback>
         </Modal>

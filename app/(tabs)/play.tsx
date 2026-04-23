@@ -1,20 +1,25 @@
-import React from "react";
-
 import { router } from "expo-router";
 import { styled } from "nativewind";
+import React from "react";
 import { Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
 import Avatar from "@/components/Avatar";
-import MenuButton from "@/components/MenuButton";
+import ProfileModal from "@/components/ProfileModal";
 import { Separator } from "@/components/Separator";
 import { gameAssets, levels } from "@/constants/data";
+import { useUser } from "@/contexts/UserContext";
+import { MaterialIcons } from "@expo/vector-icons";
 import clsx from "clsx";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
 export default function Play() {
+    // Settings/Profile
+    const [modalVisible, setModalVisible] = React.useState(false);
+    const { userInfo } = useUser();
 
+    // Navigate Difficulty button
     const handleLevelPress = (level: typeof levels[0]) => {
         if (!level.locked) {
             router.push({
@@ -31,33 +36,39 @@ export default function Play() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-background">
+        <SafeAreaView className="relative flex-1 bg-background">
             <View className="flex-1">
+                {/* Game Assets */}
+                <View className="absolute top-0 left-0 right-0 z-10 flex-row items-center justify-between px-5 py-1 bg-background/80">
+                    {gameAssets.map((asset) => (
+                        <View className="flex-row items-center justify-center gap-1" key={asset.name}>
+                            <Text className="text-md text-primary">{asset.quantity}</Text>
+                            <Image source={asset.icon} className="w-5 h-5" style={{ width: 20, height: 20 }} />
+                        </View>
+                    ))}
+                </View>
 
                 {/* Game Content */}
-                <View className="relative px-2 py-1 mt-1">
-                    <View className="w-4/5 absolute top-1 left-3 flex flex-row gap-4 items-start rounded-full">
-                        <Avatar />
-
-                    </View>
-                    {/* Game Assets */}
-                    <View className="absolute top-0 right-1 w-fit flex-row-reverse items-center gap-2 py-1 px-2">
-                        <MenuButton />
-                        <View className="flex-row gap-7 justify-between  
-                    bg-white px-5 items-center rounded-full">
-                            {gameAssets.map((asset) => (
-                                <View className="flex-row items-end justify-end gap-1 px-0 py-1" key={asset.name}>
-                                    <Text className="text-sm text-primary">{asset.quantity}</Text>
-                                    <Image source={asset.icon} className="w-5 h-5" style={{ width: 20, height: 20 }} />
-                                </View>))
-                            }
-                        </View>
+                <View className="flex-1 pt-12">
+                    {/* Avatar Section */}
+                    <View className="px-4 mb-4">
+                        <TouchableOpacity onPress={() => setModalVisible(true)}>
+                            <View className="flex-row items-center">
+                                <Avatar size='md' />
+                                <View className="-z-1 ml-[-12px] bg-accent rounded-r-full rounded-l-md px-4 py-2 shadow-md">
+                                    <Text className="text-white font-semibold text-base">
+                                        {userInfo.name}
+                                    </Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
                     </View>
 
-                    <View className="w-full absolute top-0 left-0 mt-30 flex-1 flex-col items-start gap-1 justify-start px-3">
+                    {/* Levels Section */}
+                    <View className="flex-1 flex-col gap-2 px-4">
                         <Text className="text-xl font-bold text-primary">Difficulty</Text>
-                        <Separator orientation="horizontal" thickness={1} color="gray" className="" />
-                        <View className="flex-1 mt-1 flex-col items-center gap-2 w-full">
+                        <Separator orientation="horizontal" thickness={1} color="gray" className="mb-4" />
+                        <View className="flex-1 gap-3 pb-4">
                             {levels.map((level) => (
                                 <TouchableOpacity
                                     key={level.name}
@@ -67,21 +78,22 @@ export default function Play() {
                                     className="w-full"
                                 >
                                     <ImageBackground
-                                        key={level.name}
                                         source={level.background}
-                                        className={clsx("w-full rounded-lg h-24 w-full", level.locked && "opacity-50")}
-                                        imageStyle={{ borderRadius: 8 }}
+                                        className={clsx("relative w-full rounded-lg h-28 overflow-hidden", level.locked && "opacity-50")}
+                                        imageStyle={{ borderRadius: 12 }}
                                     >
-                                        <View className="w-full flex-1 flex-col justify-between p-4 bg-black/40"> {/* Added overlay for better text visibility */}
+                                        <View className="w-full h-full flex-col justify-between p-4 bg-black/50">
                                             <Text className="text-xl font-bold text-white">{level.name}</Text>
-                                            <Separator orientation="horizontal" thickness={1} color="rgba(255,255,255,0.3)" length={"100%"} margin={10} />
-                                            <View className="flex-row justify-between mt-2">
-                                                <Text className="text-sm text-white">{level.time}</Text>
+                                            <Separator orientation="horizontal" thickness={1} color="rgba(255,255,255,0.3)" margin={8} />
+                                            <View className="flex-row justify-between mt-1">
+                                                <Text className="text-sm text-white">⏱️ {level.time}s</Text>
                                                 {level.freeHint !== 0 && (
-                                                    <Text className="text-sm text-white">{`${level.freeHint} free hint`}</Text>
+                                                    <Text className="text-sm text-white">💡 {level.freeHint} free hint</Text>
                                                 )}
-                                                <Text className="text-sm text-white">{level.hints} hints</Text>
+                                                <Text className="text-sm text-white">🔍 {level.hints} hints</Text>
                                             </View>
+                                            {level.locked && <MaterialIcons name="lock" size={30} color='black' 
+                                                className="absolute top-1/2 right-1/2" />}
                                         </View>
                                     </ImageBackground>
                                 </TouchableOpacity>
@@ -89,7 +101,13 @@ export default function Play() {
                         </View>
                     </View>
                 </View>
+
+                {/* Profile Modal */}
+                <ProfileModal
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                />
             </View>
         </SafeAreaView>
     );
-};
+}

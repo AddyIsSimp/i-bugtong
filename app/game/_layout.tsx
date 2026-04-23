@@ -58,12 +58,7 @@ export default function RootLayout() {
                     </View>
                 </View>
 
-                <View className="w-full flex-row justify-end mt-2 px-5">
-                    <View className="items-end bg-primary/70 px-4 py-1 rounded-full">
-                        <Text className="font-bold text-lg text-white">1:00</Text>
-                    </View>
-                </View>
-
+            
                 <Stack
                     screenOptions={{
                         headerShown: false,

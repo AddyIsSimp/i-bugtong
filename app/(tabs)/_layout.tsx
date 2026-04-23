@@ -49,7 +49,7 @@ const TabLayout = () => {
     const insets = useSafeAreaInsets();
 
     const TabIcon = ({
-        focused,
+        focused,    
         icon,
         isPlay,
     }: TabIconProps & { isPlay?: boolean }) => (
@@ -83,7 +83,7 @@ const TabLayout = () => {
                 tabBarShowLabel: false,
                 tabBarStyle: {
                     position: 'absolute',
-                    bottom: -2,
+                    bottom: -4,
                     height: tabBar.height,
                     marginHorizontal: 0,
                     right: tabBar.horizontalInset,
