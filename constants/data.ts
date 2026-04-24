@@ -19,10 +19,8 @@ export const updateUserInfo = (updates: Partial<UserInfoType>) => {
 
 export const tabs = [
     { name: 'codex', title: 'Codex', icon: icons.book },
-    { name: 'rank', title: 'Rank', icon: icons.rank },
     { name: 'play', title: 'Play', icon: icons.play },
-    { name: 'store', title: 'Store', icon: icons.store },
-    { name: 'settings', title: 'Settings', icon: icons.menu },
+    { name: 'rank', title: 'Rank', icon: icons.rank },
 ] as const;
 
 export const gameBG = [
@@ -42,6 +40,27 @@ export const gameAssets = [
     { name: 'life', quantity: 2, icon: custom_icons.heart },
     { name: 'hint', quantity: 10, icon: custom_icons.hint },
 ]
+
+export const rankingList = [
+    // Top 5 ranks
+    { id: 1, rank: 1, name: 'Champion', profile: images.bugtong1, score: 11231 },
+    { id: 2, rank: 2, name: 'Addy', profile: images.bugtong2, score: 91589 },
+    { id: 3, rank: 3, name: 'Santos', profile: images.bugtong3, score: 90300 },
+    { id: 4, rank: 4, name: 'Nobody', profile: images.bugtong4, score: 85000 },
+    { id: 5, rank: 5, name: 'Here', profile: images.bugtong5, score: 67100 },
+
+    // Ranks 6-15 (reusing images 1-5 in cycle)
+    { id: 6, rank: 6, name: 'Player 6', profile: images.bugtong1, score: 55000 },
+    { id: 7, rank: 7, name: 'Player 7', profile: images.bugtong2, score: 48000 },
+    { id: 8, rank: 8, name: 'Player 8', profile: images.bugtong3, score: 42000 },
+    { id: 9, rank: 9, name: 'Player 9', profile: images.bugtong4, score: 38000 },
+    { id: 10, rank: 10, name: 'Player 10', profile: images.bugtong5, score: 35000 },
+    { id: 11, rank: 11, name: 'Player 11', profile: images.bugtong1, score: 31000 },
+    { id: 12, rank: 12, name: 'Player 12', profile: images.bugtong2, score: 28000 },
+    { id: 13, rank: 13, name: 'Player 13', profile: images.bugtong3, score: 25000 },
+    { id: 14, rank: 14, name: 'Player 14', profile: images.bugtong4, score: 22000 },
+    { id: 15, rank: 15, name: 'Player 15', profile: images.bugtong5, score: 20000 },
+];
 
 export const bugtongList: BugtongProps[] = [
     {

@@ -1,26 +1,61 @@
-import { addLineAfterCommas, getBugtongsByCategory, replaceCommasWithNewlines } from "@/utils";
-import { FlatList, Text, View } from "react-native";
+import { addLineAfterCommas, getBugtongImage, getBugtongsByCategory } from "@/utils";
+import { FlatList, Image, Text, View } from "react-native";
 
 interface CategorizeBugtongProps {
     category: string;
 }
 
-export default function CategorizeBugtong({category}: CategorizeBugtongProps) {
+export default function CategorizeBugtong({ category }: CategorizeBugtongProps) {
     const bugtong = getBugtongsByCategory(category);
 
+    // const renderItem = ({ item }: { item: any }) => {
+    //     const imageSource = getBugtongImage(item.id);
+    //     return (
+    //         <View className="flex-row bg-accent/50 px-10 py-2 rounded-xl">
+    //             <View className="flex-col items-center w-full">
+    //                 {imageSource && (
+    //                     <Image
+    //                         source={imageSource}
+    //                         className="w-32 h-32 rounded-lg mb-2"
+    //                         style={{ width: 128, height: 128 }}
+    //                         resizeMode="contain"
+    //                     />
+    //                 )}
+    //                 <Text className="text-center text-lg font-medium">{item.answer}</Text>
+    //                 <Text className="text-center text-md font-light">{addLineAfterCommas(item.question)}</Text>
+    //             </View>
+    //         </View>);
+    // }
+
     const renderItem = ({ item }: { item: any }) => {
+        const imageSource = getBugtongImage(item.id);
         return (
-            <View className="flex-row bg-accent/50 px-10 py-2 rounded-xl">
-                <View className="flex-col items-center w-full">
-                    <Text className="text-center text-lg font-medium">{item.answer}</Text>
-                    <Text className="text-center text-md font-light">{addLineAfterCommas(item.question)}</Text>
+            <View className="bg-accent/30 px-4 py-3 rounded-xl">
+                <View className="flex-row items-center w-full gap-2">
+                    {imageSource && (
+                        <Image
+                            source={imageSource}
+                            className="w-32 h-32 rounded-lg mb-2"
+                            style={{ width: 128, height: 128 }}
+                            resizeMode="contain"
+                        />
+                    )}
+                    <View className="flex-col flex-1">
+                        <Text className="text-center text-lg font-bold text-primary">
+                            {item.answer}
+                        </Text>
+                        <Text className="text-center text-md font-light whitespace-pre-line">
+                            {addLineAfterCommas(item.question)}
+                        </Text>
+                    </View>
                 </View>
-            </View>);
+            </View>
+        );
     }
 
     return (
-        <View className="flex-col justify-center p-2 gap-2">
-            <Text className="text-center font-bold text-xl mb-5">{category}</Text>
+        <View className="flex-col justify-center py-1 px-5 gap-2 mb-30">
+            {/* <Text className="text-center font-bold text-xl">{category}</Text> */}
             {bugtong.length > 0 ? (
                 <FlatList
                     data={bugtong}

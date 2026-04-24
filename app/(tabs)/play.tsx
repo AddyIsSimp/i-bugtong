@@ -11,12 +11,14 @@ import { gameAssets, levels } from "@/constants/data";
 import { useUser } from "@/contexts/UserContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import clsx from "clsx";
+import SettingModal from "@/components/SettingModal";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
 export default function Play() {
-    // Settings/Profile
-    const [modalVisible, setModalVisible] = React.useState(false);
+    // Profile
+    const [profileVisible, setProfileVisible] = React.useState(false);
+    const [settingVisible, setSettingVisible] = React.useState(false);
     const { userInfo } = useUser();
 
     // Navigate Difficulty button
@@ -38,21 +40,21 @@ export default function Play() {
     return (
         <SafeAreaView className="relative flex-1 bg-background">
             <View className="flex-1">
-                {/* Game Assets */}
-                <View className="absolute top-0 left-0 right-0 z-10 flex-row items-center justify-between px-5 py-1 bg-background/80">
-                    {gameAssets.map((asset) => (
-                        <View className="flex-row items-center justify-center gap-1" key={asset.name}>
-                            <Text className="text-md text-primary">{asset.quantity}</Text>
-                            <Image source={asset.icon} className="w-5 h-5" style={{ width: 20, height: 20 }} />
-                        </View>
-                    ))}
-                </View>
-
                 {/* Game Content */}
-                <View className="flex-1 pt-12">
+                <View className="flex-1">
+                    {/* Game Assets */}
+                    <View className="flex-row items-center justify-between px-6 py-1 mb-5 bg-white">
+                        {gameAssets.map((asset) => (
+                            <View className="flex-row items-center justify-center gap-1" key={asset.name}>
+                                <Text className="text-md text-primary">{asset.quantity}</Text>
+                                <Image source={asset.icon} className="w-5 h-5" style={{ width: 20, height: 20 }} />
+                            </View>
+                        ))}
+                    </View>
+
                     {/* Avatar Section */}
-                    <View className="px-4 mb-4">
-                        <TouchableOpacity onPress={() => setModalVisible(true)}>
+                    <View className="flex-row justify-between px-4 mb-4">
+                        <TouchableOpacity onPress={() => setProfileVisible(true)}>
                             <View className="flex-row items-center">
                                 <Avatar size='md' />
                                 <View className="-z-1 ml-[-12px] bg-accent rounded-r-full rounded-l-md px-4 py-2 shadow-md">
@@ -62,7 +64,14 @@ export default function Play() {
                                 </View>
                             </View>
                         </TouchableOpacity>
+                        <TouchableOpacity className="p-2 h-fit w-fit bg-gray-700 rounded-full flex items-center 
+                            justify-center" style={{ width: 40, height: 40 }}
+                            onPress={() => setSettingVisible(!settingVisible)}>
+                            <MaterialIcons name='settings' size={20} color='white'/>
+                        </TouchableOpacity>
                     </View>
+
+
 
                     {/* Levels Section */}
                     <View className="flex-1 flex-col gap-2 px-4">
@@ -92,7 +101,7 @@ export default function Play() {
                                                 )}
                                                 <Text className="text-sm text-white">🔍 {level.hints} hints</Text>
                                             </View>
-                                            {level.locked && <MaterialIcons name="lock" size={30} color='black' 
+                                            {level.locked && <MaterialIcons name="lock" size={30} color='black'
                                                 className="absolute top-1/2 right-1/2" />}
                                         </View>
                                     </ImageBackground>
@@ -104,8 +113,13 @@ export default function Play() {
 
                 {/* Profile Modal */}
                 <ProfileModal
-                    visible={modalVisible}
-                    onClose={() => setModalVisible(false)}
+                    visible={profileVisible}
+                    onClose={() => setProfileVisible(false)}
+                />
+
+                <SettingModal
+                    visible={settingVisible}
+                    onClose={() => setSettingVisible(false)}
                 />
             </View>
         </SafeAreaView>

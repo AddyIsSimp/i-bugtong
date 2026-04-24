@@ -23,13 +23,21 @@ export default function Codex() {
         return (
             <SafeAreaView className="relative flex-1 bg-background">
                 {/* Back Button */}
-                <View className="flex-row w-fit px-2 items-center">
+                <View className="relative flex-row w-full items-center px-2 pt-2 pb-2">
                     <TouchableOpacity
                         onPress={handleBackToCategories}
-                        className="flex-row items-center justify-center p-2 rounded-md"
+                        className="z-10 flex-row items-center justify-center p-2 rounded-md"
                     >
-                        <MaterialIcons name="arrow-back" size={20} color='black' />
+                        <MaterialIcons name="arrow-back" size={24} color={colors.foreground} />
                     </TouchableOpacity>
+
+                    {/* Center text with absolute positioning */}
+                    <Text className="absolute left-0 right-0 text-center text-xl font-bold text-foreground">
+                        {selectedCategory}
+                    </Text>
+
+                    {/* Empty view for balance */}
+                    <View className="w-10" />
                 </View>
 
                 {/* Show Bugtongs for selected category */}
