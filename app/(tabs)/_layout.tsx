@@ -2,9 +2,9 @@ import { tabs } from '@/constants/data';
 import { colors, components } from '@/constants/theme';
 import { FontAwesome } from '@expo/vector-icons';
 import NetInfo from "@react-native-community/netinfo";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, BackHandler, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const tabBar = components.tabBar;
@@ -15,14 +15,17 @@ interface TabIconProps {
 }
 
 const TabLayout = () => {
+    const router = useRouter();
+
     //Online detection
     const [isOnline, setIsOnline] = useState(true);
     const [bannerAnimation] = useState(new Animated.Value(0));
+
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
             const connected = !!state.isConnected;
             setIsOnline(connected);
-            
+
             // Animate banner when connection changes
             Animated.timing(bannerAnimation, {
                 toValue: connected ? 0 : 1,
@@ -35,6 +38,45 @@ const TabLayout = () => {
 
     //Insets
     const insets = useSafeAreaInsets();
+
+    // Handle back button press on Android
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            // Get the current route to check if we're on the main screen
+            // You can customize this based on your navigation state
+            Alert.alert(
+                'Exit App',
+                'Are you sure you want to exit?',
+                [
+                    {
+                        text: 'Cancel',
+                        onPress: () => console.log('Exit cancelled'),
+                        style: 'cancel',
+                    },
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            if (Platform.OS === 'android') {
+                                // For Android, use BackHandler.exitApp()
+                                BackHandler.exitApp();
+                            } else {
+                                // For iOS, you might want to send the app to background
+                                // or use a different approach
+                                console.log('Exit pressed on iOS');
+                                // On iOS, you can't programmatically close the app
+                                Alert.alert('Info', 'Press the home button to close the app');
+                            }
+                        },
+                        style: 'destructive',
+                    },
+                ],
+                { cancelable: true }
+            );
+            return true; // Return true to prevent default behavior
+        });
+
+        return () => backHandler.remove();
+    }, []);
 
     const TabIcon = ({
         focused,

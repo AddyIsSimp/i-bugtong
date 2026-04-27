@@ -8,13 +8,14 @@ import { Image, ImageSourcePropType, Modal, Text, TouchableOpacity, TouchableWit
 interface ResultProps {
     visible: boolean;
     onClose: () => void;
+    onNext: () => void;
     bugtong: BugtongProps;
     imageAnswer: ImageSourcePropType | null;
     isCorrect: boolean;
     timeSpent?: number;
 }
 
-export default function ResultModal({ visible, onClose, bugtong, imageAnswer, isCorrect, timeSpent = 0 }: ResultProps) {
+export default function ResultModal({ visible, onClose, onNext, bugtong, imageAnswer, isCorrect, timeSpent = 0 }: ResultProps) {
     const [showStatistic, setShowStatistic] = useState(false);
 
     // Calculate rewards based on performance
@@ -35,6 +36,13 @@ export default function ResultModal({ visible, onClose, bugtong, imageAnswer, is
     const handleBackToMenu = () => {
         onClose();
         router.push('/(tabs)/play');
+    }
+
+    const handleNext = () => {
+        if (onNext) {
+            onNext();
+        }
+        onClose();
     }
 
     return (
@@ -174,12 +182,14 @@ export default function ResultModal({ visible, onClose, bugtong, imageAnswer, is
                                 >
                                     <Text className="text-white text-center font-semibold">Back to Menu</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity
-                                    className="bg-blue-500 py-3 rounded-full mt-2"
-                                    onPress={onClose}
-                                >
-                                    <Text className="text-white text-center font-semibold">Next</Text>
-                                </TouchableOpacity>
+                                {isCorrect && (
+                                    <TouchableOpacity
+                                        className="bg-blue-500 py-3 rounded-full mt-2"
+                                        onPress={handleNext}
+                                    >
+                                        <Text className="text-white text-center font-semibold">Next</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         </View>
                     </TouchableWithoutFeedback>

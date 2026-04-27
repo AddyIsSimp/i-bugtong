@@ -1,8 +1,9 @@
 // app/game/index.tsx
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from "expo-router";
 import { styled } from "nativewind";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Alert, Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
@@ -13,8 +14,8 @@ import Timer from '@/components/Timer';
 import { custom_icons } from "@/constants/custom_icons";
 import { bugtongList, gameAssets as initialGameAssets, levels } from "@/constants/data";
 import { useGame } from '@/contexts/GameContext';
+import { getNextUnsolvedBugtong } from "@/utils";
 
-import { submitAnswer } from '@/services/api';
 
 const SafeAreaView = styled(RNSafeAreaView);
 
@@ -61,6 +62,28 @@ export default function GamePage() {
         }
     }, [difficultyString]);
 
+    useEffect(() => {
+        return () => {
+            // Cleanup when component unmounts (user navigates away)
+            console.log('GamePage unmounting - cleaning up timer');
+            setIsGameActive(false);
+            setTimeExpired(false);
+            // This will cause the Timer component to stop because isRunning becomes false
+        };
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            // When screen comes into focus
+            return () => {
+                // When screen loses focus (user navigates away)
+                console.log('Screen lost focus - cleaning up timer');
+                setIsGameActive(false);
+                setTimeExpired(false);
+            };
+        }, [])
+    );
+
     // Get time from params or levels data
     const getInitialTime = (): number => {
         if (params.levelTime) {
@@ -94,10 +117,30 @@ export default function GamePage() {
     const handleTimeUp = () => {
         setTimeExpired(true);
         setIsGameActive(false);
+
+        // Show alert with options
         Alert.alert(
             "Time's Up!",
-            "You ran out of time. Better luck next time!",
-            [{ text: "OK", onPress: () => console.log("Time's up") }]
+            "You ran out of time. Would you like to retry or go back to menu?",
+            [
+                {
+                    text: "Back",
+                    onPress: () => {
+                        console.log('Back to menu');
+                        router.push('/(tabs)/play');
+                    },
+                    style: 'cancel'
+                },
+                {
+                    text: "Retry",
+                    onPress: () => {
+                        console.log('Retrying level');
+                        resetGameForRetry();
+                        modalRef.current?.open();
+                    },
+                    style: 'default'
+                }
+            ]
         );
     };
 
@@ -180,7 +223,27 @@ export default function GamePage() {
         setTimerKey(prev => prev + 1);
         startTimeRef.current = Date.now();
 
-        // Reset hints for current bugtong (optional - only if you want to reset)
+        // // Reset hints for current bugtong (optional - only if you want to reset)
+        // if (currentBugtong && currentBugtong.hint) {
+        //     const resetBugtong = {
+        //         ...currentBugtong,
+        //         hint: currentBugtong.hint.map((h, idx) =>
+        //             idx === 0 ? { ...h, open: true } : { ...h, open: false }
+        //         )
+        //     };
+        //     setCurrentBugtong(resetBugtong);
+        //     setHintIndex(1);
+        // }
+    };
+
+    const resetGameForRetry = () => {
+        // Reset all game states
+        setTimeExpired(false);
+        setCapturedImage(null);
+        setTimerKey(prev => prev + 1);
+        startTimeRef.current = Date.now();
+
+        // Reset hints for current bugtong
         if (currentBugtong && currentBugtong.hint) {
             const resetBugtong = {
                 ...currentBugtong,
@@ -191,11 +254,58 @@ export default function GamePage() {
             setCurrentBugtong(resetBugtong);
             setHintIndex(1);
         }
+
+        setIsGameActive(true);
+    };
+
+    const moveToNextBugtong = () => {
+        if (!currentBugtong) return;
+
+        // Mark current as solved
+        const bugtongIndex = bugtongList.findIndex(b => b.id === currentBugtong.id);
+        if (bugtongIndex !== -1) {
+            bugtongList[bugtongIndex].solved = true;
+        }
+
+        const nextBugtong = getNextUnsolvedBugtong(currentBugtong.id, difficultyString);
+
+        if (nextBugtong) {
+            // Update the current bugtong state
+            setCurrentBugtong(nextBugtong);
+
+            // Reset hints for new bugtong
+            if (nextBugtong.hint) {
+                const resetHints = nextBugtong.hint.map((h, idx) =>
+                    idx === 0 ? { ...h, open: true } : { ...h, open: false }
+                );
+                const resetBugtong = { ...nextBugtong, hint: resetHints };
+                setCurrentBugtong(resetBugtong);
+                setHintIndex(1);
+            }
+
+            // Reset all game states
+            setCapturedImage(null);
+            setTimeExpired(false);
+            setTimerKey(prev => prev + 1);
+            startTimeRef.current = Date.now();
+
+            // IMPORTANT: Restart the game
+            setIsGameActive(true);
+
+            // Close the result modal (already handled by onClose)
+            // The game is now active with the new bugtong
+        } else {
+            Alert.alert(
+                "Congratulations!",
+                `You've completed all ${difficultyString} bugtongs!`,
+                [{ text: "Back to Menu", onPress: () => router.push('/(tabs)/play') }]
+            );
+        }
     };
 
     //FOR TESTING
     const handleSubmit = () => {
-if (!capturedImage) {
+        if (!capturedImage) {
             Alert.alert("No Image", "Please capture an image first.");
             return;
         }
@@ -208,14 +318,15 @@ if (!capturedImage) {
             return;
         }
 
+        setIsGameActive(false);
+
         const timeSpent = (Date.now() - startTimeRef.current) / 1000;
 
-         setAnswerResult({
-                isCorrect: true,
-                timeSpent: timeSpent
-            });
-            setResultModalVisible(true);
-            setIsGameActive(false);
+        setAnswerResult({
+            isCorrect: true,
+            timeSpent: timeSpent
+        });
+        setResultModalVisible(true);
     }
 
     //REAL HANDLE SUBMIT
@@ -286,9 +397,16 @@ if (!capturedImage) {
     const currentHintCount = gameAssets.find(asset => asset.name === 'hint')?.quantity || 0;
 
     const handleBackMenu = () => {
+        // Reset all game state before navigating back
+        setIsGameActive(false);
+        setTimeExpired(false);
+        setCapturedImage(null);
+        setTimerKey(prev => prev + 1);
+
+        // Close modal and navigate
         modalRef.current?.close();
         router.push('/(tabs)/play');
-    }
+    };
 
     return (
         <>
@@ -404,6 +522,7 @@ if (!capturedImage) {
                 onClose={() => {
                     setResultModalVisible(false);
                 }}
+                onNext={moveToNextBugtong}
                 bugtong={currentBugtong || {
                     id: 0,
                     difficulty: difficultyString as Difficulty,
@@ -427,10 +546,11 @@ if (!capturedImage) {
                 contentClassName="absolute top-0 right-0 w-full h-full rounded-2xl"
             >
                 <View className="flex-1 items-center justify-center bg-gray-500/50">
-                    <View className="relative w-4/5 h-4/5 bg-white rounded-2xl p-10 items-center shadow-lg">
+                    <View className="relative w-4/5 h-4/5 bg-white rounded-2xl p-10 pt-17 items-center shadow-lg">
                         <TouchableOpacity className="absolute top-2 left-2 bg-gray-100/10 rounded-full p-2"
                             onPress={handleBackMenu}>
-                            <MaterialIcons name={'arrow-back'} color={'black'} size={24} />
+                            {/* <MaterialIcons name={'arrow-back'} color={'black'} size={24} /> */}
+                            <Text className="text-lg bg-gray-300 px-3 py-2 rounded-full font-bold">Back</Text>
                         </TouchableOpacity>
                         <View className="flex-col gap-2 items-center justify-center">
                             <Text className="text-2xl font-medium">Level</Text>

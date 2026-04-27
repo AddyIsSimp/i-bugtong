@@ -41,15 +41,17 @@ function LayoutContent() {
                     {
                         text: 'OK',
                         onPress: () => {
-                            console.log("OK pressed - navigating back")
-                            router.push('/(tabs)/play')
+                            console.log("OK pressed - navigating back");
+                            // Force reset the game state before navigating
+                            // This will be handled by the cleanup in GamePage
+                            router.push('/(tabs)/play');
                         },
                         style: 'default'
                     },
                 ],
             )
         } else {
-            router.back();
+            router.push('/(tabs)/play');
         }
     };
 

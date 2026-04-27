@@ -1,4 +1,3 @@
-import { GameProvider } from '@/contexts/GameContext';
 import { UserProvider } from '@/contexts/UserContext';
 import '@/global.css';
 import { useFonts } from "expo-font";
@@ -29,9 +28,7 @@ export default function RootLayout() {
 
   return (
     <UserProvider>
-      <GameProvider>
-        <Stack screenOptions={{ headerShown: false }} />
-      </GameProvider>
+      <Stack screenOptions={{ headerShown: false }} />
     </UserProvider>);
 }
 

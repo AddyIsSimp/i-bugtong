@@ -225,3 +225,25 @@ export const getCurrentBugtong = (difficultyString: string): BugtongProps => {
 export const isBugtongListEmpty = (): boolean => {
     return bugtongList.length === 0;
 }
+
+// utils/bugtongUtils.ts
+export const getNextUnsolvedBugtong = (currentId: number | string, difficulty: string): BugtongProps | null => {
+    // Get all unsolved bugtongs with the same difficulty, EXCLUDING the current one
+    const unsolvedBugtongs = bugtongList.filter(b =>
+        b.difficulty === difficulty &&
+        !b.solved &&
+        b.id !== currentId  // IMPORTANT: Exclude current bugtong
+    );
+
+    if (unsolvedBugtongs.length > 0) {
+        return unsolvedBugtongs[0]; // Return the first unsolved bugtong
+    }
+    return null;
+};
+
+// Check if all bugtongs in this difficulty are solved
+export const isAllBugtongsSolved = (difficulty: string): boolean => {
+    const unsolved = bugtongList.filter(b => b.difficulty === difficulty && !b.solved);
+    return unsolved.length === 0;
+};
+

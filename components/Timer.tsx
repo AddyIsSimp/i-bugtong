@@ -1,6 +1,6 @@
 // components/Timer.tsx
 import { Text, View } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface TimerProps {
     initialSeconds: number;
@@ -10,19 +10,29 @@ interface TimerProps {
 
 export default function Timer({ initialSeconds, onTimeUp, isRunning }: TimerProps) {
     const [seconds, setSeconds] = useState(initialSeconds);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
         setSeconds(initialSeconds);
     }, [initialSeconds]);
 
     useEffect(() => {
-        let interval: ReturnType<typeof setInterval> | undefined; // Fix: Use ReturnType<typeof setInterval>
-        
+        // Clear any existing interval
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+
+        // Start new interval if conditions are met
         if (isRunning && seconds > 0) {
-            interval = setInterval(() => {
+            intervalRef.current = setInterval(() => {
                 setSeconds((prev) => {
                     if (prev <= 1) {
-                        if (interval) clearInterval(interval);
+                        // Time's up
+                        if (intervalRef.current) {
+                            clearInterval(intervalRef.current);
+                            intervalRef.current = null;
+                        }
                         onTimeUp();
                         return 0;
                     }
@@ -31,8 +41,12 @@ export default function Timer({ initialSeconds, onTimeUp, isRunning }: TimerProp
             }, 1000);
         }
 
+        // Cleanup on unmount or when dependencies change
         return () => {
-            if (interval) clearInterval(interval);
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
         };
     }, [isRunning, seconds, onTimeUp]);
 
@@ -52,6 +66,17 @@ export default function Timer({ initialSeconds, onTimeUp, isRunning }: TimerProp
         if (seconds <= 30) return 'text-yellow-500';
         return 'text-white';
     };
+
+    // Don't render if timer is not running and time is 0
+    if (!isRunning && seconds === 0) {
+        return (
+            <View className="items-end bg-red-500/70 px-4 py-1 rounded-full">
+                <Text className="font-bold text-lg text-white">
+                    Time's Up!
+                </Text>
+            </View>
+        );
+    }
 
     return (
         <View className={`items-end bg-primary/70 px-4 py-1 rounded-full ${getTimerColor()}`}>

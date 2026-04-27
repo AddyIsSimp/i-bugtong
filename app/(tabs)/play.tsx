@@ -11,6 +11,7 @@ import SettingModal from "@/components/SettingModal";
 import { gameAssets, levels } from "@/constants/data";
 import { useUser } from "@/contexts/UserContext";
 import { checkApiHealth } from "@/services/api";
+import { getBugtongStats, toLowerCase } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
 import clsx from "clsx";
 
@@ -36,6 +37,12 @@ export default function Play() {
                 }
             });
         }
+    };
+
+    //HELPER FUNCTIONS
+    const getLevelProgress = (levelName: string): string => {
+        const stats = getBugtongStats(toLowerCase(levelName) as Difficulty);
+        return `${stats.solved}/${stats.total}`;
     };
 
     // Add this function in your GamePage component
@@ -109,7 +116,12 @@ export default function Play() {
                                         imageStyle={{ borderRadius: 12 }}
                                     >
                                         <View className="w-full h-full flex-col justify-between p-4 bg-black/50">
-                                            <Text className="text-xl font-bold text-white">{level.name}</Text>
+                                            <View className="flex-row justify-between items-center">
+                                                <Text className="text-xl font-bold text-white">{level.name}</Text>
+                                                <Text className="text-white text-md font-medium">
+                                                    {getBugtongStats(toLowerCase(level.name) as Difficulty).solved}/
+                                                    {getBugtongStats(toLowerCase(level.name) as Difficulty).total}
+                                                </Text>                                            </View>
                                             <Separator orientation="horizontal" thickness={1} color="rgba(255,255,255,0.3)" margin={8} />
                                             <View className="flex-row justify-between mt-1">
                                                 <Text className="text-sm text-white">⏱️ {level.time}s</Text>
