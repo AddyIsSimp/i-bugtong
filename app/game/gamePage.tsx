@@ -1,6 +1,6 @@
 // app/game/index.tsx
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { styled } from "nativewind";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Image, Pressable, Text, TouchableOpacity, View } from "react-native";
@@ -12,14 +12,19 @@ import ResultModal from "@/components/ResultModal";
 import Timer from '@/components/Timer';
 import { custom_icons } from "@/constants/custom_icons";
 import { bugtongList, gameAssets as initialGameAssets, levels } from "@/constants/data";
+import { useGame } from '@/contexts/GameContext';
+
+import { submitAnswer } from '@/services/api';
 
 const SafeAreaView = styled(RNSafeAreaView);
 
-export default function Index() {
+export default function GamePage() {
+    //STATES
     const modalRef = useRef<CModalRef>(null);
     const [captureModalVisible, setCaptureModalVisible] = useState(false);
+
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
-    const [isGameActive, setIsGameActive] = useState(false);
+    const { isGameActive, setIsGameActive } = useGame();
     const [timeExpired, setTimeExpired] = useState(false);
     const [timerKey, setTimerKey] = useState(0);
     const params = useLocalSearchParams();
@@ -31,6 +36,10 @@ export default function Index() {
     const [currentBugtong, setCurrentBugtong] = useState<BugtongProps | null>(null);
     const [hintIndex, setHintIndex] = useState(0); // Track which hint to unlock next
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [apiError, setApiError] = useState<string | null>(null);
+
+    //HELPER FUNCTIONS
     const getDifficultyString = (difficulty: number | string): string => {
         const diff = Number(difficulty);
         if (diff === 1) return 'easy';
@@ -184,8 +193,9 @@ export default function Index() {
         }
     };
 
+    //FOR TESTING
     const handleSubmit = () => {
-        if (!capturedImage) {
+if (!capturedImage) {
             Alert.alert("No Image", "Please capture an image first.");
             return;
         }
@@ -199,23 +209,86 @@ export default function Index() {
         }
 
         const timeSpent = (Date.now() - startTimeRef.current) / 1000;
-        const isAnswerCorrect = true; // Replace with actual validation logic
 
-        setAnswerResult({
-            isCorrect: isAnswerCorrect,
-            timeSpent: timeSpent
-        });
-        setResultModalVisible(true);
-        setIsGameActive(false);
-    };
+         setAnswerResult({
+                isCorrect: true,
+                timeSpent: timeSpent
+            });
+            setResultModalVisible(true);
+            setIsGameActive(false);
+    }
+
+    //REAL HANDLE SUBMIT
+    // const handleSubmit = async () => {
+    //     if (!capturedImage) {
+    //         Alert.alert("No Image", "Please capture an image first.");
+    //         return;
+    //     }
+    //     if (!isGameActive) {
+    //         Alert.alert("Game Not Started", "Please start the game first.");
+    //         return;
+    //     }
+    //     if (timeExpired) {
+    //         Alert.alert("Time's Up!", "You ran out of time!");
+    //         return;
+    //     }
+
+    //     const timeSpent = (Date.now() - startTimeRef.current) / 1000;
+
+    //     setIsSubmitting(true);
+    //     setApiError(null);
+
+    //     try {
+    //         // Use the original image URI directly (no copying needed)
+    //         const imageUri = capturedImage;
+
+    //         // Get expected answer from current bugtong
+    //         const expectedAnswer = currentBugtong?.answer || '';
+
+    //         // Ensure bugtongId is a number
+    //         const bugtongId = typeof currentBugtong?.id === 'string'
+    //             ? parseInt(currentBugtong.id)
+    //             : (currentBugtong?.id || 0);
+
+    //         // Submit to API
+    //         const result = await submitAnswer(
+    //             imageUri,
+    //             bugtongId,
+    //             expectedAnswer,
+    //             timeSpent
+    //         );
+
+    //         console.log('API Response:', result);
+
+    //         // Show result modal with API response
+    //         setAnswerResult({
+    //             isCorrect: result.is_correct,
+    //             timeSpent: timeSpent
+    //         });
+    //         setResultModalVisible(true);
+    //         setIsGameActive(false);
+
+    //     } catch (error) {
+    //         console.error('Submission error:', error);
+    //         const errorMessage = error instanceof Error ? error.message : 'Failed to submit answer';
+    //         setApiError(errorMessage);
+    //         Alert.alert(
+    //             "Submission Failed",
+    //             errorMessage + "\n\nPlease check your connection to the API server.",
+    //             [{ text: "OK", onPress: () => console.log("Error acknowledged") }]
+    //         );
+    //     } finally {
+    //         setIsSubmitting(false);
+    //     }
+    // };
 
     // Get current hint count
     const currentHintCount = gameAssets.find(asset => asset.name === 'hint')?.quantity || 0;
 
     const handleBackMenu = () => {
         modalRef.current?.close();
-        router.push('/(tabs)/play'); 
-    };
+        router.push('/(tabs)/play');
+    }
 
     return (
         <>
@@ -306,11 +379,14 @@ export default function Index() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        className="h-12 flex items-center justify-center bg-blue-300 px-5 rounded-full"
+                        className={`h-12 flex items-center justify-center px-5 rounded-full ${isSubmitting ? 'bg-gray-400' : 'bg-blue-300'}`}
                         activeOpacity={0.8}
                         onPress={handleSubmit}
+                        disabled={isSubmitting}
                     >
-                        <Text className="text-lg font-medium">Submit</Text>
+                        <Text className="text-lg font-medium">
+                            {isSubmitting ? 'Submitting...' : 'Submit'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>

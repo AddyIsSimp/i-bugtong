@@ -1,17 +1,18 @@
 import { router } from "expo-router";
 import { styled } from "nativewind";
 import React from "react";
-import { Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
 import Avatar from "@/components/Avatar";
 import ProfileModal from "@/components/ProfileModal";
 import { Separator } from "@/components/Separator";
+import SettingModal from "@/components/SettingModal";
 import { gameAssets, levels } from "@/constants/data";
 import { useUser } from "@/contexts/UserContext";
+import { checkApiHealth } from "@/services/api";
 import { MaterialIcons } from "@expo/vector-icons";
 import clsx from "clsx";
-import SettingModal from "@/components/SettingModal";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
@@ -25,7 +26,7 @@ export default function Play() {
     const handleLevelPress = (level: typeof levels[0]) => {
         if (!level.locked) {
             router.push({
-                pathname: "/game",
+                pathname: "/game/gamePage",
                 params: {
                     levelName: level.name,
                     levelDifficulty: level.difficulty,
@@ -36,6 +37,22 @@ export default function Play() {
             });
         }
     };
+
+    // Add this function in your GamePage component
+    const testApiConnection = async () => {
+        try {
+            const result = await checkApiHealth();
+            if (result) {
+                Alert.alert("Success", "API server is reachable!");
+            } else {
+                Alert.alert("Error", "Cannot reach API server. Check your connection.");
+            }
+        } catch (error) {
+            Alert.alert("Error", `Connection failed: ${error}`);
+        }
+    };
+
+
 
     return (
         <SafeAreaView className="relative flex-1 bg-background">
@@ -67,7 +84,7 @@ export default function Play() {
                         <TouchableOpacity className="p-2 h-fit w-fit bg-gray-700 rounded-full flex items-center 
                             justify-center" style={{ width: 40, height: 40 }}
                             onPress={() => setSettingVisible(!settingVisible)}>
-                            <MaterialIcons name='settings' size={20} color='white'/>
+                            <MaterialIcons name='settings' size={20} color='white' />
                         </TouchableOpacity>
                     </View>
 
@@ -108,7 +125,11 @@ export default function Play() {
                                 </TouchableOpacity>
                             ))}
                         </View>
+                        {/*<TouchableOpacity onPress={testApiConnection} className="w-fit h-fit flex-1 bg-blue-300">
+                            <Text className="text-xs text-red-500">Test API</Text>
+                        </TouchableOpacity> */}
                     </View>
+
                 </View>
 
                 {/* Profile Modal */}

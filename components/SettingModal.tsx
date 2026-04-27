@@ -18,6 +18,7 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
             transparent={true}
             visible={visible}
             onRequestClose={onClose}
+            
         >
             <TouchableWithoutFeedback onPress={onClose}>
                 <View className="flex-1 items-center justify-center bg-gray-900/70">

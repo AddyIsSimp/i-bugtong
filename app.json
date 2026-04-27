@@ -30,8 +30,10 @@
             },
             "package": "com.addy.ibugtong",
             "permissions": [
-                "android.permission.VIBRATE"
-            ]
+                "android.permission.VIBRATE",
+                "INTERNET"
+            ],
+            // "usesClearTextTraffic": true
         },
         "web": {
             "bundler": "metro",
