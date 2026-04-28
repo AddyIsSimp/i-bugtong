@@ -1,6 +1,6 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { styled } from "nativewind";
-import React from "react";
+import React, { useCallback } from "react";
 import { Alert, Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
@@ -8,10 +8,10 @@ import Avatar from "@/components/Avatar";
 import ProfileModal from "@/components/ProfileModal";
 import { Separator } from "@/components/Separator";
 import SettingModal from "@/components/SettingModal";
-import { gameAssets, levels } from "@/constants/data";
+import { gameAssets, levels as initialLevels } from "@/constants/data";
 import { useUser } from "@/contexts/UserContext";
 import { checkApiHealth } from "@/services/api";
-import { getBugtongStats, toLowerCase } from "@/utils";
+import { getBugtongStats, isAllBugtongsSolved, toLowerCase } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
 import clsx from "clsx";
 
@@ -22,6 +22,9 @@ export default function Play() {
     const [profileVisible, setProfileVisible] = React.useState(false);
     const [settingVisible, setSettingVisible] = React.useState(false);
     const { userInfo } = useUser();
+
+    //Levels
+    const [levels, setLevels] = React.useState(initialLevels);
 
     // Navigate Difficulty button
     const handleLevelPress = (level: typeof levels[0]) => {
@@ -38,6 +41,30 @@ export default function Play() {
             });
         }
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            const checkAndUnlockLevels = () => {
+                const updatedLevels = levels.map((level, index) => {
+                    if (level.locked && index > 0) {
+                        const previousLevelName = levels[index - 1].name;
+                        const previousLevelCompleted = isAllBugtongsSolved(toLowerCase(previousLevelName));
+
+                        if (previousLevelCompleted) {
+                            return { ...level, locked: false };
+                        }
+                    }
+                    return level;
+                });
+
+                if (JSON.stringify(updatedLevels) !== JSON.stringify(levels)) {
+                    setLevels(updatedLevels);
+                }
+            }
+
+            checkAndUnlockLevels();
+        }, [levels])
+    );
 
     //HELPER FUNCTIONS
     const getLevelProgress = (levelName: string): string => {

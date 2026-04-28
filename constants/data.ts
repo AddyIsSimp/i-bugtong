@@ -71,7 +71,7 @@ export const bugtongList: BugtongProps[] = [
         solved: false
     },
     {
-        id: 2, difficulty: 'easy', category: 'Parts of the body',
+        id: 2, difficulty: 'medium', category: 'Parts of the body',
         question: "Dalawang batong itim, malayo ang nararating.",
         answer: "Mata",
         hint: [{ text: "Parts of the body", open: true }, { text: "Used to see the world", open: false }, { text: "M _ T _", open: false }],
@@ -104,7 +104,7 @@ export const bugtongList: BugtongProps[] = [
     },
 
     {
-        id: 6, difficulty: 'medium', category: 'Things',
+        id: 6, difficulty: 'hard', category: 'Things',
         question: "Dalawang bintana, tinitingnan ng madla.",
         answer: "Salamin sa mata",
         hint: [{ text: "Thing", open: true }, { text: "Worn to see better", open: false }, { text: "S _ L _ M _ N", open: false }],
@@ -120,21 +120,21 @@ export const bugtongList: BugtongProps[] = [
 
     },
     {
-        id: 8, difficulty: 'hard', category: 'Things',
+        id: 8, difficulty: 'medium', category: 'Things',
         question: "Naglalakad nang walang paa, nagsusulat nang walang kamay.",
         answer: "Lapis",
         hint: [{ text: "Thing", open: true }, { text: "Used for drawing or writing", open: false }, { text: "L _ P _ S", open: false }],
         solved: false
     },
     {
-        id: 9, difficulty: 'easy', category: 'Things',
+        id: 9, difficulty: 'hard', category: 'Things',
         question: "Dahon na walang buhay, puti ang kulay.",
         answer: "Papel",
         hint: [{ text: "Thing", open: true }, { text: "You write on it", open: false }, { text: "P _ P _ L", open: false }],
         solved: false
     },
     {
-        id: 10, difficulty: 'medium', category: 'Things',
+        id: 10, difficulty: 'easy', category: 'Things',
         question: "Bumubukas nang walang bibig, sumasara nang walang kamay.",
         answer: "Susi",
         hint: [{ text: "Thing", open: true }, { text: "Used for locks", open: false }, { text: "S _ S _", open: false }],
@@ -143,35 +143,35 @@ export const bugtongList: BugtongProps[] = [
 
     // --- FRUITS/FOODS ---
     {
-        id: 11, difficulty: 'easy', category: 'Fruits/Foods',
+        id: 11, difficulty: 'medium', category: 'Fruits/Foods',
         question: "Bahay ni Santa, puno ng perlas.",
         answer: "Buko",
         hint: [{ text: "Food", open: true }, { text: "Hard shell, sweet water", open: false }, { text: "B _ K _", open: false }],
         solved: false
     },
     {
-        id: 12, difficulty: 'easy', category: 'Fruits/Foods',
+        id: 12, difficulty: 'hard', category: 'Fruits/Foods',
         question: "Nang mabili ay berde, nang kainin ay dilaw.",
         answer: "Saging",
         hint: [{ text: "Fruit", open: true }, { text: "Monkeys love this", open: false }, { text: "S _ G _ N G", open: false }],
         solved: false
     },
     {
-        id: 13, difficulty: 'medium', category: 'Fruits/Foods',
+        id: 13, difficulty: 'easy', category: 'Fruits/Foods',
         question: "Butil na ginto, kinakain ng buong mundo.",
         answer: "Kanin",
         hint: [{ text: "Food", open: true }, { text: "The staple food of Filipinos", open: false }, { text: "K _ N _ N", open: false }],
         solved: false
     },
     {
-        id: 14, difficulty: 'easy', category: 'Fruits/Foods',
+        id: 14, difficulty: 'medium', category: 'Fruits/Foods',
         question: "Walang kulay, walang lasa, kailangan ng lahat.",
         answer: "Tubig",
         hint: [{ text: "Drink", open: true }, { text: "Quenches your thirst", open: false }, { text: "T _ B _ G", open: false }],
         solved: false
     },
     {
-        id: 15, difficulty: 'easy', category: 'Fruits/Foods',
+        id: 15, difficulty: 'hard', category: 'Fruits/Foods',
         question: "Hugis puso, kulay ginto, matamis ang loob.",
         answer: "Mangga",
         hint: [{ text: "Fruit", open: true }, { text: "Philippine national fruit", open: false }, { text: "M _ N G G _", open: false }],
