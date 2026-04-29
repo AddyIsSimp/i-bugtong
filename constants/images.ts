@@ -5,6 +5,8 @@ import stacked_waves_vertical from '@/assets/gameBG/stacked-waves-haikei_VERTICA
 import layered_peaks_horizontal from '@/assets/gameBG/layered-peaks-haikei_HORIZONTAL.png';
 import stacked_peaks_horizontal from '@/assets/gameBG/stacked-peaks-haikei_HORIZONTAL.png';
 import stacked_waves_horizontal from '@/assets/gameBG/stacked-waves-haikei_HORIZONTAL.png';
+import blob_scene_haikei from '@/assets/gameBG/blob-scene-haikei.png';
+import app_icon from '@/assets/icons/appIcon.png';
 
 import bugtong1 from '@/assets/bugtongImage/1_1.jpg';
 import bugtong2 from '@/assets/bugtongImage/2_1.jpg';
@@ -24,12 +26,14 @@ import bugtong15 from '@/assets/bugtongImage/15_1.png';
 
 export default {
     avatar,
+    app_icon,
     layered_peaks_vertical,
     stacked_peaks_vertical,
     stacked_waves_vertical,
     layered_peaks_horizontal,
     stacked_peaks_horizontal,
     stacked_waves_horizontal,
+    blob_scene_haikei,
 
     bugtong1,
     bugtong2,

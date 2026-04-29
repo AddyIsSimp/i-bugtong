@@ -1,5 +1,8 @@
+import { useUser } from "@/contexts/UserContext";
 import { Redirect } from "expo-router";
 
 export default function Index() {
-  return <Redirect href="/(tabs)/play" />;
+  const { isAuthenticated } = useUser();
+
+  return <Redirect href={isAuthenticated ? "/(tabs)/play" : "/(auth)/sign-in"} />;
 }

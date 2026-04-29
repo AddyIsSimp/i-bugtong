@@ -5,7 +5,7 @@ import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)",
+  initialRouteName: "index",
 };
 
 export default function RootLayout() {
