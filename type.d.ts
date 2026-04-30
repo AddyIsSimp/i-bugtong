@@ -8,7 +8,7 @@ declare global {
     }
 
     type Difficulty = 'easy' | 'medium' | 'hard'
-    
+
     interface Hint {
         text: string;
         open: boolean;
@@ -23,6 +23,20 @@ declare global {
         hint?: Hint[];
         solved: boolean;
     }
+
+    interface APIResponse {
+        status: number,
+        message?: string,
+        error?: string,
+    }
+
+    interface CreateAccountRequest {
+        username: string;
+        email: string;
+        password: string;
+        points?: number;
+    }
 }
 
-export {};
+export { };
+

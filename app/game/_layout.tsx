@@ -2,9 +2,9 @@ import { styled } from "nativewind";
 import { Alert, Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
-import { gameAssets, gameBG } from "@/constants/data";
+import { gameBG } from "@/constants/data";
 import { colors } from "@/constants/theme";
-import { GameProvider, useGame } from "@/contexts/GameContext"; // Import the provider and hook
+import { useGame } from "@/contexts/GameContext";
 import { FontAwesome } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 
@@ -14,7 +14,7 @@ const SafeAreaView = styled(RNSafeAreaView);
 function LayoutContent() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { isGameActive } = useGame(); // Now you can access isGameActive
+    const { isGameActive, gameAssets } = useGame();
 
     const getDifficultyString = (difficulty: number | string): string => {
         const diff = Number(difficulty);
@@ -108,13 +108,10 @@ function LayoutContent() {
     );
 }
 
-// Main layout that provides the GameProvider
 export default function RootLayout() {
     return (
         <SafeAreaView className="flex-1 bg-background">
-            <GameProvider>
-                <LayoutContent />
-            </GameProvider>
+            <LayoutContent />
         </SafeAreaView>
     );
 }

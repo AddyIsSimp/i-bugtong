@@ -1,5 +1,8 @@
+import { useGame } from "@/contexts/GameContext";
+import { useUser } from "@/contexts/UserContext";
 import { colors } from "@/constants/theme";
 import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useState } from 'react';
 import { Alert, BackHandler, Modal, Platform, Switch, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 
@@ -11,6 +14,54 @@ interface SettingModalProps {
 export default function SettingModal({ visible, onClose }: SettingModalProps) {
     const [isMusicEnabled, setIsMusicEnabled] = useState(true);
     const [isSFXEnabled, setIsSFXEnabled] = useState(true);
+    const { resetStoredProgress } = useGame();
+    const { signOut } = useUser();
+
+    const handleResetProgress = () => {
+        Alert.alert(
+            'Reset Progress',
+            'This will clear your local game progress, hints, and rewards. Continue?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Reset',
+                    style: 'destructive',
+                    onPress: () => {
+                        resetStoredProgress();
+                        onClose();
+                        Alert.alert('Progress Reset', 'Your local game progress has been cleared.');
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
+    };
+
+    const handleSignOut = () => {
+        Alert.alert(
+            'Sign Out',
+            'Do you want to sign out of this device?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Sign Out',
+                    style: 'destructive',
+                    onPress: () => {
+                        signOut();
+                        onClose();
+                        router.replace('/(auth)/sign-in');
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
+    };
 
     const handleExitApp = () => {
         Alert.alert(
@@ -72,7 +123,6 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
 
                             {/* Settings Options */}
                             <View className="flex-col gap-3">
-                                {/* Music Toggle */}
                                 <View className="flex-row items-center justify-between border border-gray-200 py-1 px-5 rounded-2xl">
                                     <Text className="text-start text-lg text-black">Music</Text>
                                     <Switch
@@ -83,7 +133,6 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
                                     />
                                 </View>
 
-                                {/* SFX Toggle */}
                                 <View className="flex-row items-center justify-between border border-gray-200 py-1 px-5 rounded-2xl">
                                     <Text className="text-start text-lg text-black">SFX</Text>
                                     <Switch
@@ -93,6 +142,20 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
                                         thumbColor={isSFXEnabled ? '#ffffff' : '#f4f3f4'}
                                     />
                                 </View>
+
+                                <TouchableOpacity
+                                    className="border border-orange-200 bg-orange-50 py-3 px-5 rounded-2xl"
+                                    onPress={handleResetProgress}
+                                >
+                                    <Text className="text-lg text-orange-700 font-medium text-center">Reset Progress</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    className="border border-blue-200 bg-blue-50 py-3 px-5 rounded-2xl"
+                                    onPress={handleSignOut}
+                                >
+                                    <Text className="text-lg text-blue-700 font-medium text-center">Sign Out</Text>
+                                </TouchableOpacity>
                             </View>
 
                             <TouchableOpacity className="w-full bg-red-400 py-2 rounded-2xl" onPress={handleExitApp}>

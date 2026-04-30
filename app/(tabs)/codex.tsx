@@ -1,6 +1,6 @@
 import CategorizeBugtong from "@/components/CategorizeBugtong";
-import { bugtongList } from "@/constants/data";
 import { colors } from "@/constants/theme";
+import { useGame } from "@/contexts/GameContext";
 import { getCategoryStatsArray, getSolvedBugtongCount } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
 import { styled } from "nativewind";
@@ -11,7 +11,8 @@ import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 const SafeAreaView = styled(RNSafeAreaView);
 
 export default function Codex() {
-    const categoryArray = getCategoryStatsArray();
+    const { bugtongs } = useGame();
+    const categoryArray = getCategoryStatsArray(bugtongs);
 
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -75,7 +76,7 @@ export default function Codex() {
                     <Text className="text-2xl font-bold text-primary">Codex</Text>
                     <View className="px-3 py-1 bg-accent rounded-lg">
                         <Text className="text-lg font-medium text-white">
-                            {getSolvedBugtongCount('all')} / {bugtongList.length}
+                            {getSolvedBugtongCount(bugtongs, 'all')} / {bugtongs.length}
                         </Text>
                     </View>
                 </View>

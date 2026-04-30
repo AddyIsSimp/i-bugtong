@@ -1,3 +1,4 @@
+import { useGame } from "@/contexts/GameContext";
 import { addLineAfterCommas, getBugtongImage, getBugtongsByCategory } from "@/utils";
 import { FlatList, Image, Text, View } from "react-native";
 
@@ -6,7 +7,8 @@ interface CategorizeBugtongProps {
 }
 
 export default function CategorizeBugtong({ category }: CategorizeBugtongProps) {
-    const bugtong = getBugtongsByCategory(category);
+    const { bugtongs } = useGame();
+    const bugtong = getBugtongsByCategory(bugtongs, category);
 
     // const renderItem = ({ item }: { item: any }) => {
     //     const imageSource = getBugtongImage(item.id);

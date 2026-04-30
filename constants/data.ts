@@ -8,13 +8,31 @@ export interface UserInfoType {
     profile: ImageSourcePropType; // Can be number (local) or { uri: string }
 }
 
-export let userInfo: UserInfoType = {
+export interface StoredUserInfo {
+    name: string;
+    profileUri: string | null;
+    isAuthenticated: boolean;
+}
+
+export interface LevelConfig {
+    name: string;
+    difficulty: number;
+    background: ImageSourcePropType;
+    time: number;
+    hints: number;
+    freeHint: number;
+    locked: boolean;
+}
+
+export interface GameAssetConfig {
+    name: string;
+    quantity: number;
+    icon: ImageSourcePropType;
+}
+
+export const defaultUserInfo: UserInfoType = {
     name: "John Doe",
     profile: images.avatar,
-};
-
-export const updateUserInfo = (updates: Partial<UserInfoType>) => {
-    userInfo = { ...userInfo, ...updates };
 };
 
 export const tabs = [
@@ -29,17 +47,17 @@ export const gameBG = [
     { difficulty: 'hard', background: images.layered_peaks_vertical },
 ]
 
-export const levels = [
+export const initialLevels: LevelConfig[] = [
     { name: "Easy", difficulty: 1, background: images.stacked_peaks_horizontal, time: 10, hints: 3, freeHint: 1, locked: false },
     { name: "Medium", difficulty: 2, background: images.stacked_waves_horizontal, time: 120, hints: 2, freeHint: 0, locked: true },
     { name: "Hard", difficulty: 3, background: images.layered_peaks_horizontal, time: 100, hints: 1, freeHint: 0, locked: true },
-]
+];
 
-export const gameAssets = [
+export const initialGameAssets: GameAssetConfig[] = [
     { name: 'diamond', quantity: 3, icon: custom_icons.diamond },
     { name: 'life', quantity: 2, icon: custom_icons.heart },
     { name: 'hint', quantity: 10, icon: custom_icons.hint },
-]
+];
 
 export const rankingList = [
     // Top 5 ranks
@@ -62,7 +80,7 @@ export const rankingList = [
     { id: 15, rank: 15, name: 'Player 15', profile: images.bugtong5, score: 20000 },
 ];
 
-export const bugtongList: BugtongProps[] = [
+export const initialBugtongList: BugtongProps[] = [
     {
         id: 1, difficulty: 'easy', category: 'Parts of the body',
         question: "Isang dampa, lima ang haligi.",
@@ -178,3 +196,13 @@ export const bugtongList: BugtongProps[] = [
         solved: false
     }
 ];
+
+export const cloneInitialLevels = (): LevelConfig[] => initialLevels.map((level) => ({ ...level }));
+
+export const cloneInitialGameAssets = (): GameAssetConfig[] => initialGameAssets.map((asset) => ({ ...asset }));
+
+export const cloneInitialBugtongList = (): BugtongProps[] =>
+    initialBugtongList.map((bugtong) => ({
+        ...bugtong,
+        hint: bugtong.hint?.map((hint) => ({ ...hint })) ?? [],
+    }));

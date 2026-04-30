@@ -19,8 +19,8 @@ function LayoutContent() {
           className="flex-row items-center px-2"
           style={{ paddingTop: insets.top + 8 }}
         >
-          <Image source={images.app_icon} className="w-12 h-12" />
-          <Text className="font-medium ml-2 text-black">iBugtong</Text>
+          <Image source={images.app_icon} className="w-13 h-13" />
+          <Text className="font-medium ml-2 text-black text-lg">iBugtong</Text>
         </View>
 
         <View

@@ -1,50 +1,51 @@
-// utils/bugtongUtils.ts
-import { bugtongList } from '@/constants/data';
-
 /**
  * Get total count of bugtongs by difficulty
- * @param difficulty - 'easy', 'medium', 'hard', or 'all'
- * @returns number of bugtongs
  */
-export const getTotalBugtongCount = (difficulty: Difficulty | 'all' = 'all'): number => {
+export const getTotalBugtongCount = (
+    bugtongs: BugtongProps[],
+    difficulty: Difficulty | 'all' = 'all'
+): number => {
     if (difficulty === 'all') {
-        return bugtongList.length;
+        return bugtongs.length;
     }
-    return bugtongList.filter(bugtong => bugtong.difficulty === difficulty).length;
+    return bugtongs.filter((bugtong) => bugtong.difficulty === difficulty).length;
 };
 
 /**
  * Get count of unsolved bugtongs by difficulty
- * @param difficulty - 'easy', 'medium', 'hard', or 'all'
- * @returns number of unsolved bugtongs
  */
-export const getUnsolvedBugtongCount = (difficulty: Difficulty | 'all' = 'all'): number => {
+export const getUnsolvedBugtongCount = (
+    bugtongs: BugtongProps[],
+    difficulty: Difficulty | 'all' = 'all'
+): number => {
     if (difficulty === 'all') {
-        return bugtongList.filter(bugtong => !bugtong.solved).length;
+        return bugtongs.filter((bugtong) => !bugtong.solved).length;
     }
-    return bugtongList.filter(bugtong => bugtong.difficulty === difficulty && !bugtong.solved).length;
+    return bugtongs.filter((bugtong) => bugtong.difficulty === difficulty && !bugtong.solved).length;
 };
 
 /**
  * Get count of solved bugtongs by difficulty
- * @param difficulty - 'easy', 'medium', 'hard', or 'all'
- * @returns number of solved bugtongs
  */
-export const getSolvedBugtongCount = (difficulty: Difficulty | 'all' = 'all'): number => {
+export const getSolvedBugtongCount = (
+    bugtongs: BugtongProps[],
+    difficulty: Difficulty | 'all' = 'all'
+): number => {
     if (difficulty === 'all') {
-        return bugtongList.filter(bugtong => bugtong.solved).length;
+        return bugtongs.filter((bugtong) => bugtong.solved).length;
     }
-    return bugtongList.filter(bugtong => bugtong.difficulty === difficulty && bugtong.solved).length;
+    return bugtongs.filter((bugtong) => bugtong.difficulty === difficulty && bugtong.solved).length;
 };
 
 /**
  * Get progress percentage by difficulty
- * @param difficulty - 'easy', 'medium', 'hard', or 'all'
- * @returns progress percentage (0-100)
  */
-export const getProgressPercentage = (difficulty: Difficulty | 'all' = 'all'): number => {
-    const total = getTotalBugtongCount(difficulty);
-    const solved = getSolvedBugtongCount(difficulty);
+export const getProgressPercentage = (
+    bugtongs: BugtongProps[],
+    difficulty: Difficulty | 'all' = 'all'
+): number => {
+    const total = getTotalBugtongCount(bugtongs, difficulty);
+    const solved = getSolvedBugtongCount(bugtongs, difficulty);
 
     if (total === 0) return 0;
     return (solved / total) * 100;
@@ -52,97 +53,61 @@ export const getProgressPercentage = (difficulty: Difficulty | 'all' = 'all'): n
 
 /**
  * Get bugtong statistics by difficulty
- * @param difficulty - 'easy', 'medium', 'hard', or 'all'
- * @returns object with total, unsolved, solved, and progress
  */
-export const getBugtongStats = (difficulty: Difficulty | 'all' = 'all') => {
-    const total = getTotalBugtongCount(difficulty);
-    const unsolved = getUnsolvedBugtongCount(difficulty);
-    const solved = getSolvedBugtongCount(difficulty);
-    const progress = getProgressPercentage(difficulty);
+export const getBugtongStats = (
+    bugtongs: BugtongProps[],
+    difficulty: Difficulty | 'all' = 'all'
+) => {
+    const total = getTotalBugtongCount(bugtongs, difficulty);
+    const unsolved = getUnsolvedBugtongCount(bugtongs, difficulty);
+    const solved = getSolvedBugtongCount(bugtongs, difficulty);
+    const progress = getProgressPercentage(bugtongs, difficulty);
 
     return {
         total,
         unsolved,
         solved,
         progress,
-        message: unsolved === 0 ? '🎉 All bugtongs solved!' : `${unsolved} bugtong(s) remaining`
+        message: unsolved === 0 ? 'All bugtongs solved!' : `${unsolved} bugtong(s) remaining`,
     };
 };
 
-/**
- * Check if all bugtongs in a difficulty are solved
- * @param difficulty - 'easy', 'medium', 'hard'
- * @returns boolean
- */
-export const isDifficultyCompleted = (difficulty: Difficulty): boolean => {
-    return getUnsolvedBugtongCount(difficulty) === 0;
-};
+export const isDifficultyCompleted = (bugtongs: BugtongProps[], difficulty: Difficulty): boolean =>
+    getUnsolvedBugtongCount(bugtongs, difficulty) === 0;
 
-/**
- * Get bugtongs by difficulty
- * @param difficulty - 'easy', 'medium', 'hard'
- * @returns array of bugtongs
- */
-export const getBugtongsByDifficulty = (difficulty: Difficulty) => {
-    return bugtongList.filter(bugtong => bugtong.difficulty === difficulty);
-};
+export const getBugtongsByDifficulty = (bugtongs: BugtongProps[], difficulty: Difficulty) =>
+    bugtongs.filter((bugtong) => bugtong.difficulty === difficulty);
 
-/**
- * Get unsolved bugtongs by difficulty
- * @param difficulty - 'easy', 'medium', 'hard'
- * @returns array of unsolved bugtongs
- */
-export const getUnsolvedBugtongsByDifficulty = (difficulty: Difficulty) => {
-    return bugtongList.filter(bugtong => bugtong.difficulty === difficulty && !bugtong.solved);
-};
+export const getUnsolvedBugtongsByDifficulty = (bugtongs: BugtongProps[], difficulty: Difficulty) =>
+    bugtongs.filter((bugtong) => bugtong.difficulty === difficulty && !bugtong.solved);
 
+export const getCategoryAndRatio = (
+    bugtongs: BugtongProps[]
+): { category: string; ratio: string; completed: number; total: number }[] | null => {
+    if (isBugtongListEmpty(bugtongs)) return null;
 
-/**
- * Get all unique categories with their completion ratio
- * @returns Array of objects with category name and ratio, or null if list is empty
- */
-export const getCategoryAndRatio = (): { category: string; ratio: string; completed: number; total: number }[] | null => {
-    if (isBugtongListEmpty()) return null;
+    const categories = [...new Set(bugtongs.map((bugtong) => bugtong.category))];
 
-    // Get all unique categories
-    const categories = [...new Set(bugtongList.map(bugtong => bugtong.category))];
-
-    // Calculate ratio for each category
-    const categoryStats = categories.map(category => {
-        // Get all bugtongs in this category
-        const categoryBugtongs = bugtongList.filter(bugtong => bugtong.category === category);
-
-        // Calculate total and completed counts
+    return categories.map((category) => {
+        const categoryBugtongs = bugtongs.filter((bugtong) => bugtong.category === category);
         const total = categoryBugtongs.length;
-        const completed = categoryBugtongs.filter(bugtong => bugtong.solved).length;
-
-        // Calculate ratio as fraction and percentage
-        const ratio = `${completed}/${total}`;
-        const percentage = total > 0 ? (completed / total) * 100 : 0;
+        const completed = categoryBugtongs.filter((bugtong) => bugtong.solved).length;
 
         return {
             category,
-            ratio,
+            ratio: `${completed}/${total}`,
             completed,
             total,
-            percentage
         };
     });
-
-    return categoryStats;
 };
 
-/**
- * Alternative: Get categories with completion percentage
- * @returns Object with categories as keys and completion info as values
- */
-export const getCategoryStats = () => {
-    if (isBugtongListEmpty()) return null;
+export const getCategoryStats = (bugtongs: BugtongProps[]) => {
+    if (isBugtongListEmpty(bugtongs)) return null;
 
     const stats: Record<string, { completed: number; total: number; ratio: string; percentage: number }> = {};
 
-    bugtongList.forEach(bugtong => {
+    bugtongs.forEach((bugtong) => {
         const category = bugtong.category;
         if (!stats[category]) {
             stats[category] = { completed: 0, total: 0, ratio: '0/0', percentage: 0 };
@@ -158,34 +123,22 @@ export const getCategoryStats = () => {
     return stats;
 };
 
-/**
- * Get unique categories list only
- * @returns Array of unique category names or empty array if list is empty
- */
-export const getUniqueCategories = (): string[] => {
-    if (isBugtongListEmpty()) return [];
-    return [...new Set(bugtongList.map(bugtong => bugtong.category))];
+export const getUniqueCategories = (bugtongs: BugtongProps[]): string[] => {
+    if (isBugtongListEmpty(bugtongs)) return [];
+    return [...new Set(bugtongs.map((bugtong) => bugtong.category))];
 };
 
-/**
- * Get bugtongs by category
- * @param category - Category name
- * @returns Array of bugtongs in that category
- */
-export const getBugtongsByCategory = (category: string) => {
-    return bugtongList.filter(bugtong => bugtong.category === category);
-};
+export const getBugtongsByCategory = (bugtongs: BugtongProps[], category: string) =>
+    bugtongs.filter((bugtong) => bugtong.category === category);
 
-/**
- * Get category statistics as an array
- * @returns Array of category statistics or empty array if list is empty
- */
-export const getCategoryStatsArray = (): { category: string; completed: number; total: number; ratio: string; percentage: number }[] => {
-    if (isBugtongListEmpty()) return [];
+export const getCategoryStatsArray = (
+    bugtongs: BugtongProps[]
+): { category: string; completed: number; total: number; ratio: string; percentage: number }[] => {
+    if (isBugtongListEmpty(bugtongs)) return [];
 
     const stats: Record<string, { completed: number; total: number; ratio: string; percentage: number }> = {};
 
-    bugtongList.forEach(bugtong => {
+    bugtongs.forEach((bugtong) => {
         const category = bugtong.category;
         if (!stats[category]) {
             stats[category] = { completed: 0, total: 0, ratio: '0/0', percentage: 0 };
@@ -198,19 +151,16 @@ export const getCategoryStatsArray = (): { category: string; completed: number; 
         stats[category].percentage = (stats[category].completed / stats[category].total) * 100;
     });
 
-    // Convert to array 
     return Object.entries(stats).map(([category, statsData]) => ({
         category,
-        ...statsData
+        ...statsData,
     }));
 };
 
-// Helper function to safely get current bugtong
-export const getCurrentBugtong = (difficultyString: string): BugtongProps => {
-    const found = bugtongList.find((b) => b.difficulty === difficultyString);
+export const getCurrentBugtong = (bugtongs: BugtongProps[], difficultyString: string): BugtongProps => {
+    const found = bugtongs.find((bugtong) => bugtong.difficulty === difficultyString);
     if (found) return found as BugtongProps;
 
-    // Return a properly typed fallback
     return {
         id: 0,
         difficulty: difficultyString as Difficulty,
@@ -218,32 +168,23 @@ export const getCurrentBugtong = (difficultyString: string): BugtongProps => {
         question: 'Question not found',
         answer: 'Unknown',
         hint: [],
-        solved: false
+        solved: false,
     };
 };
 
-export const isBugtongListEmpty = (): boolean => {
-    return bugtongList.length === 0;
-}
+export const isBugtongListEmpty = (bugtongs: BugtongProps[]): boolean => bugtongs.length === 0;
 
-// utils/bugtongUtils.ts
-export const getNextUnsolvedBugtong = (currentId: number | string, difficulty: string): BugtongProps | null => {
-    // Get all unsolved bugtongs with the same difficulty, EXCLUDING the current one
-    const unsolvedBugtongs = bugtongList.filter(b =>
-        b.difficulty === difficulty &&
-        !b.solved &&
-        b.id !== currentId  // IMPORTANT: Exclude current bugtong
+export const getNextUnsolvedBugtong = (
+    bugtongs: BugtongProps[],
+    currentId: number | string,
+    difficulty: string
+): BugtongProps | null => {
+    const unsolvedBugtongs = bugtongs.filter(
+        (bugtong) => bugtong.difficulty === difficulty && !bugtong.solved && bugtong.id !== currentId
     );
 
-    if (unsolvedBugtongs.length > 0) {
-        return unsolvedBugtongs[0]; // Return the first unsolved bugtong
-    }
-    return null;
+    return unsolvedBugtongs[0] ?? null;
 };
 
-// Check if all bugtongs in this difficulty are solved
-export const isAllBugtongsSolved = (difficulty: string): boolean => {
-    const unsolved = bugtongList.filter(b => b.difficulty === difficulty && !b.solved);
-    return unsolved.length === 0;
-};
-
+export const isAllBugtongsSolved = (bugtongs: BugtongProps[], difficulty: string): boolean =>
+    bugtongs.filter((bugtong) => bugtong.difficulty === difficulty && !bugtong.solved).length === 0;

@@ -1,14 +1,18 @@
 import PasswordInput from "@/components/PasswordInput";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
+import { useUser } from "@/contexts/UserContext";
+import { createAccount } from "@/services/api";
 import { router } from "expo-router";
 import { useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Signup() {
+  const { signUp } = useUser();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confPassword, setConfPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
 
   // Error states
   const [usernameError, setUsernameError] = useState('');
@@ -87,7 +91,9 @@ export default function Signup() {
   };
 
   // Handle form submission
-  const handleSignup = () => {
+  const handleSignup = async () => {
+
+    setIsSignUp(true);
     // Validate all fields
     validateUsername(username);
     validateEmail(email);
@@ -105,13 +111,38 @@ export default function Signup() {
       return;
     }
 
-    // If validation passes
-    Alert.alert(
-      'Success',
-      'Account created successfully!',
-      [{ text: 'OK', onPress: () => router.replace('/sign-in') }]
-    );
-  };
+    try {
+      //Send request to /create-account
+      const result = await createAccount(username, email, password)
+
+      if (result.status === 201) { //Create account successfully
+
+        Alert.alert(
+          'Success',
+          'Account created successfully!',
+          [{
+            text: 'OK', onPress: () => {
+              signUp(username);
+              router.replace('/(auth)/sign-in');
+            }
+          }]
+        );
+      } else {
+        Alert.alert(
+          'Error' + result.status,
+          result?.error || result?.message,
+        )
+      }
+    } catch (error: any) {
+      console.log("Create account fail: " + error)
+      Alert.alert(
+        'Error',
+        error.toString()
+      )
+    } finally {
+      setIsSignUp(false)
+    }
+  }
 
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -141,6 +172,7 @@ export default function Signup() {
               className={`p-3 border-2 w-full rounded-full ${usernameError ? 'border-red-500' : 'border-gray-500'}`}
               placeholder="Enter username"
               value={username}
+              editable={!isSignUp}
               onChangeText={validateUsername}
               autoCapitalize="none"
             />
@@ -154,6 +186,7 @@ export default function Signup() {
               className={`p-3 border-2 w-full rounded-full ${emailError ? 'border-red-500' : 'border-gray-500'}`}
               placeholder="Enter email"
               value={email}
+              editable={!isSignUp}
               onChangeText={validateEmail}
               autoCapitalize="none"
               keyboardType="email-address"
@@ -168,6 +201,7 @@ export default function Signup() {
               containerClassName={`${passwordError ? 'border-red-500' : 'border-gray-500'}`}
               inputClassName=""
               iconClassName=""
+              editable={!isSignUp}
               placeholder="Your password"
               value={password}
               onChangeText={validatePassword}
@@ -182,6 +216,7 @@ export default function Signup() {
               containerClassName={`${confPasswordError ? 'border-red-500' : 'border-gray-500'}`}
               inputClassName=""
               iconClassName=""
+              editable={!isSignUp}
               placeholder="Confirm password"
               value={confPassword}
               onChangeText={validateConfPassword}
@@ -193,10 +228,18 @@ export default function Signup() {
         <View className="flex-col items-center gap-4">
           <View className="flex items-center justify-center w-full">
             <TouchableOpacity
-              className="bg-accent w-4/5 px-4 py-3 rounded-full"
+              className={`w-4/5 px-4 py-3 rounded-full ${isSignUp ? 'bg-accent' : 'bg-accent'}`}
               onPress={handleSignup}
+              disabled={isSignUp}
             >
-              <Text className="text-white text-center">Create</Text>
+              {isSignUp ? (
+                <View className="flex-row items-center justify-center gap-2">
+                  <ActivityIndicator size="small" color="white" />
+                  <Text className="text-white text-center">Creating Account...</Text>
+                </View>
+              ) : (
+                <Text className="text-white text-center">Create</Text>
+              )}
             </TouchableOpacity>
           </View>
           <View className="flex-row items-center gap-1">

@@ -7,12 +7,14 @@ interface PasswordInputProps extends TextInputProps {
   inputClassName?: string;
   iconClassName?: string;
   placeholder?: string;
+  editable?: boolean;
 }
 
 export default function PasswordInput({ 
   containerClassName = '',
   inputClassName = '',
   iconClassName = '',
+  editable = true,
   placeholder = 'Enter password',
   value,
   onChangeText,
@@ -26,6 +28,7 @@ export default function PasswordInput({
         className={`flex-1 py-3 text-base ${inputClassName}`}
         placeholder={placeholder}
         value={value}
+        editable={editable}
         onChangeText={onChangeText}
         secureTextEntry={!isPasswordVisible}
         {...restProps}

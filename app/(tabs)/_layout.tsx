@@ -114,6 +114,7 @@ const TabLayout = () => {
                     tabBarShowLabel: false,
                     tabBarStyle: {
                         position: 'absolute',
+                        bottom: -6,
                         height: tabBar.height,
                         marginHorizontal: 0,
                         right: tabBar.horizontalInset,

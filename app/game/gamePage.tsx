@@ -1,23 +1,18 @@
 // app/game/index.tsx
-import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from "expo-router";
-import { styled } from "nativewind";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Alert, Image, Pressable, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
 import CModal, { CModalRef } from '@/components/CModal';
 import CaptureModal from '@/components/CaptureModal';
 import ResultModal from "@/components/ResultModal";
 import Timer from '@/components/Timer';
 import { custom_icons } from "@/constants/custom_icons";
-import { bugtongList, gameAssets as initialGameAssets, levels } from "@/constants/data";
+import { initialLevels } from "@/constants/data";
 import { useGame } from '@/contexts/GameContext';
 import { getNextUnsolvedBugtong } from "@/utils";
-
-
-const SafeAreaView = styled(RNSafeAreaView);
 
 export default function GamePage() {
     //STATES
@@ -25,21 +20,14 @@ export default function GamePage() {
     const [captureModalVisible, setCaptureModalVisible] = useState(false);
 
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
-    const { isGameActive, setIsGameActive } = useGame();
+    const { bugtongs, gameAssets, levels, isGameActive, setBugtongs, setGameAssets, setIsGameActive } = useGame();
     const [timeExpired, setTimeExpired] = useState(false);
     const [timerKey, setTimerKey] = useState(0);
     const params = useLocalSearchParams();
 
-    // Game assets state
-    const [gameAssets, setGameAssets] = useState(initialGameAssets);
-
     // Hints state for current bugtong
     const [currentBugtong, setCurrentBugtong] = useState<BugtongProps | null>(null);
-    const [hintIndex, setHintIndex] = useState(0); // Track which hint to unlock next
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [apiError, setApiError] = useState<string | null>(null);
-
+    const isSubmitting = false;
     //HELPER FUNCTIONS
     const getDifficultyString = (difficulty: number | string): string => {
         const diff = Number(difficulty);
@@ -53,14 +41,12 @@ export default function GamePage() {
 
     // Load current bugtong
     useEffect(() => {
-        const bugtong = bugtongList.find((b) => b.difficulty === difficultyString);
+        const bugtong = bugtongs.find((b) => b.difficulty === difficultyString && !b.solved)
+            || bugtongs.find((b) => b.difficulty === difficultyString);
         if (bugtong) {
             setCurrentBugtong(bugtong);
-            // Find first locked hint index - Fix for Error 3
-            const firstLockedIndex = bugtong.hint?.findIndex(h => !h.open) ?? -1;
-            setHintIndex(firstLockedIndex === -1 ? (bugtong.hint?.length ?? 0) : firstLockedIndex);
         }
-    }, [difficultyString]);
+    }, [bugtongs, difficultyString]);
 
     useEffect(() => {
         return () => {
@@ -70,7 +56,7 @@ export default function GamePage() {
             setTimeExpired(false);
             // This will cause the Timer component to stop because isRunning becomes false
         };
-    }, []);
+    }, [setIsGameActive]);
 
     useFocusEffect(
         useCallback(() => {
@@ -81,7 +67,7 @@ export default function GamePage() {
                 setIsGameActive(false);
                 setTimeExpired(false);
             };
-        }, [])
+        }, [setIsGameActive])
     );
 
     // Get time from params or levels data
@@ -95,7 +81,8 @@ export default function GamePage() {
             }
             return parseInt(timeStr) || 60;
         }
-        const level = levels.find(l => l.difficulty === parseInt(params.levelDifficulty as string));
+        const level = levels.find(l => l.difficulty === parseInt(params.levelDifficulty as string))
+            || initialLevels.find(l => l.difficulty === parseInt(params.levelDifficulty as string));
         return level?.time || 60;
     };
 
@@ -188,11 +175,9 @@ export default function GamePage() {
             };
             setCurrentBugtong(updatedBugtong);
 
-            // Update the global bugtongList (optional, for persistence)
-            const bugtongIndex = bugtongList.findIndex(b => b.id === currentBugtong.id);
-            if (bugtongIndex !== -1) {
-                bugtongList[bugtongIndex] = updatedBugtong;
-            }
+            setBugtongs(prev =>
+                prev.map(bugtong => (bugtong.id === currentBugtong.id ? updatedBugtong : bugtong))
+            );
 
             // Deduct hint from gameAssets
             setGameAssets(prev => prev.map(asset =>
@@ -200,9 +185,6 @@ export default function GamePage() {
                     ? { ...asset, quantity: Math.max(0, asset.quantity - 1) }
                     : asset
             ));
-
-            // Update hint index
-            setHintIndex(prev => prev + 1);
 
             Alert.alert("Hint Unlocked!", lockedHints[0]?.text || "Hint unlocked!");
         }
@@ -215,6 +197,14 @@ export default function GamePage() {
     });
 
     const startTimeRef = useRef<number>(0);
+
+    const getRewards = (timeSpent: number) => {
+        let diamonds = 0;
+        diamonds += 1;
+        if (timeSpent < 60) diamonds += 2;
+        diamonds += 1;
+        return diamonds;
+    };
 
     const startGame = () => {
         setIsGameActive(true);
@@ -252,7 +242,9 @@ export default function GamePage() {
                 )
             };
             setCurrentBugtong(resetBugtong);
-            setHintIndex(1);
+            setBugtongs(prev =>
+                prev.map(bugtong => (bugtong.id === currentBugtong.id ? resetBugtong : bugtong))
+            );
         }
 
         setIsGameActive(true);
@@ -261,13 +253,12 @@ export default function GamePage() {
     const moveToNextBugtong = () => {
         if (!currentBugtong) return;
 
-        // Mark current as solved
-        const bugtongIndex = bugtongList.findIndex(b => b.id === currentBugtong.id);
-        if (bugtongIndex !== -1) {
-            bugtongList[bugtongIndex].solved = true;
-        }
+        const updatedBugtongs = bugtongs.map((bugtong) =>
+            bugtong.id === currentBugtong.id ? { ...bugtong, solved: true } : bugtong
+        );
+        setBugtongs(updatedBugtongs);
 
-        const nextBugtong = getNextUnsolvedBugtong(currentBugtong.id, difficultyString);
+        const nextBugtong = getNextUnsolvedBugtong(updatedBugtongs, currentBugtong.id, difficultyString);
 
         if (nextBugtong) {
             // Update the current bugtong state
@@ -280,7 +271,9 @@ export default function GamePage() {
                 );
                 const resetBugtong = { ...nextBugtong, hint: resetHints };
                 setCurrentBugtong(resetBugtong);
-                setHintIndex(1);
+                setBugtongs(prev =>
+                    prev.map(bugtong => (bugtong.id === nextBugtong.id ? resetBugtong : bugtong))
+                );
             }
 
             // Reset all game states
@@ -321,6 +314,13 @@ export default function GamePage() {
         setIsGameActive(false);
 
         const timeSpent = (Date.now() - startTimeRef.current) / 1000;
+        const diamondsEarned = getRewards(timeSpent);
+
+        setGameAssets(prev => prev.map(asset =>
+            asset.name === 'diamond'
+                ? { ...asset, quantity: asset.quantity + diamondsEarned }
+                : asset
+        ));
 
         setAnswerResult({
             isCorrect: true,

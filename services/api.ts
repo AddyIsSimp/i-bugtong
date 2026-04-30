@@ -1,14 +1,11 @@
 // services/api.ts
 import axios from 'axios';
 
-const BASE_URL = 'http://10.16.44.95:8000';
+const BASE_URL = 'http://10.96.86.95:8000';
 
 const api = axios.create({
     baseURL: BASE_URL,
     timeout: 30000,
-    headers: {
-        'Content-Type': 'multipart/form-data',
-    },
 });
 
 export interface SubmitAnswerResponse {
@@ -63,5 +60,94 @@ export const checkApiHealth = async (): Promise<boolean> => {
         return false;
     }
 };
+
+
+
+export const createAccount = async (
+    username: string,
+    email: string,
+    password: string,
+): Promise<APIResponse> => {
+    try {
+        const response = await api.post(
+            '/api/create-account',
+            {
+                username,
+                email,
+                password,
+                points: 0,
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        return {
+            status: response.status,
+            message: response.data.message || 'Account created successfully'
+        }
+    } catch (error) {
+        console.error('Error creating account:', error);
+
+        if (axios.isAxiosError(error)) {
+            //Handle duplicate account (409 conflict)
+            if (error.response?.status === 409) {
+                return {
+                    status: 409,
+                    error: error.response?.data?.detail || 'Username or email already exists',
+                }
+            }
+
+            if (error.response?.status === 422) {
+                return {
+                    status: 422,
+                    error: 'Invalid input data',
+                };
+            }
+
+            return {
+                status: error.response?.status || 500,
+                error: error.response?.data?.detail || error.message || 'Failed to create account',
+            }
+        }
+
+        return {
+            status: 500,
+            error: 'Network error occurred. Please check your connection.',
+        };
+
+    }
+
+}
+
+export const login = async (
+    identification: string,
+    password: string
+): Promise<APIResponse> => {
+    try {
+        const result = await api.post(
+            '/api/login', {
+            identification,
+            password
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }
+        )
+
+        return {
+            status: result.status,
+            message: result.data?.message || 'Login successfully'
+        }
+    } catch (error) {
+        return {
+            status: 500,
+            error: 'Network error occured. Please check your connection.'
+        }
+    }
+}
 
 export default api;

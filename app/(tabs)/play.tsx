@@ -1,16 +1,15 @@
 import { router, useFocusEffect } from "expo-router";
 import { styled } from "nativewind";
 import React, { useCallback } from "react";
-import { Alert, Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
+import { Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
 import Avatar from "@/components/Avatar";
 import ProfileModal from "@/components/ProfileModal";
 import { Separator } from "@/components/Separator";
 import SettingModal from "@/components/SettingModal";
-import { gameAssets, levels as initialLevels } from "@/constants/data";
+import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
-import { checkApiHealth } from "@/services/api";
 import { getBugtongStats, isAllBugtongsSolved, toLowerCase } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
 import clsx from "clsx";
@@ -22,9 +21,7 @@ export default function Play() {
     const [profileVisible, setProfileVisible] = React.useState(false);
     const [settingVisible, setSettingVisible] = React.useState(false);
     const { userInfo } = useUser();
-
-    //Levels
-    const [levels, setLevels] = React.useState(initialLevels);
+    const { bugtongs, gameAssets, levels, setLevels } = useGame();
 
     // Navigate Difficulty button
     const handleLevelPress = (level: typeof levels[0]) => {
@@ -48,7 +45,10 @@ export default function Play() {
                 const updatedLevels = levels.map((level, index) => {
                     if (level.locked && index > 0) {
                         const previousLevelName = levels[index - 1].name;
-                        const previousLevelCompleted = isAllBugtongsSolved(toLowerCase(previousLevelName));
+                        const previousLevelCompleted = isAllBugtongsSolved(
+                            bugtongs,
+                            toLowerCase(previousLevelName)
+                        );
 
                         if (previousLevelCompleted) {
                             return { ...level, locked: false };
@@ -63,30 +63,14 @@ export default function Play() {
             }
 
             checkAndUnlockLevels();
-        }, [levels])
+        }, [bugtongs, levels, setLevels])
     );
 
     //HELPER FUNCTIONS
     const getLevelProgress = (levelName: string): string => {
-        const stats = getBugtongStats(toLowerCase(levelName) as Difficulty);
+        const stats = getBugtongStats(bugtongs, toLowerCase(levelName) as Difficulty);
         return `${stats.solved}/${stats.total}`;
     };
-
-    // Add this function in your GamePage component
-    const testApiConnection = async () => {
-        try {
-            const result = await checkApiHealth();
-            if (result) {
-                Alert.alert("Success", "API server is reachable!");
-            } else {
-                Alert.alert("Error", "Cannot reach API server. Check your connection.");
-            }
-        } catch (error) {
-            Alert.alert("Error", `Connection failed: ${error}`);
-        }
-    };
-
-
 
     return (
         <SafeAreaView className="relative flex-1 bg-background">
@@ -146,9 +130,9 @@ export default function Play() {
                                             <View className="flex-row justify-between items-center">
                                                 <Text className="text-xl font-bold text-white">{level.name}</Text>
                                                 <Text className="text-white text-md font-medium">
-                                                    {getBugtongStats(toLowerCase(level.name) as Difficulty).solved}/
-                                                    {getBugtongStats(toLowerCase(level.name) as Difficulty).total}
-                                                </Text>                                            </View>
+                                                    {getLevelProgress(level.name)}
+                                                </Text>
+                                            </View>
                                             <Separator orientation="horizontal" thickness={1} color="rgba(255,255,255,0.3)" margin={8} />
                                             <View className="flex-row justify-between mt-1">
                                                 <Text className="text-sm text-white">⏱️ {level.time}s</Text>
@@ -164,9 +148,6 @@ export default function Play() {
                                 </TouchableOpacity>
                             ))}
                         </View>
-                        {/*<TouchableOpacity onPress={testApiConnection} className="w-fit h-fit flex-1 bg-blue-300">
-                            <Text className="text-xs text-red-500">Test API</Text>
-                        </TouchableOpacity> */}
                     </View>
 
                 </View>

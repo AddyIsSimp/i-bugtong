@@ -1,15 +1,33 @@
 import PasswordInput from "@/components/PasswordInput";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
 import TermsModal from "@/components/TermsModal";
+import { useUser } from "@/contexts/UserContext";
 import { router } from "expo-router";
 import { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Signin() {
+  const { signIn } = useUser();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
+
+  const handleLogin = () => {
+    if (!username.trim()) {
+      Alert.alert("Missing username", "Please enter your username or email.");
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert("Missing password", "Please enter your password.");
+      return;
+    }
+
+
+    signIn(username);
+    router.replace("/(tabs)/play");
+  };
 
   return (
     <View className="flex-1 items-center justify-between p-4">
@@ -53,12 +71,12 @@ export default function Signin() {
 
         <View className="flex-col items-center gap-4">
           <View className="flex items-center justify-center w-full">
-            <TouchableOpacity className="bg-accent w-4/5 px-4 py-3 rounded-full">
+            <TouchableOpacity className="bg-accent w-4/5 px-4 py-3 rounded-full" onPress={handleLogin}>
               <Text className="text-white text-center">Login</Text>
             </TouchableOpacity>
           </View>
           <View className="flex-row items-center gap-1">
-            <Text>Don't have an account?</Text>
+            <Text>Don&apos;t have an account?</Text>
             <TouchableOpacity onPress={() => router.replace("/sign-up")}>
               <Text className="text-blue-500 underline text-md">Signup</Text>
             </TouchableOpacity>
