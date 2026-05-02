@@ -9,7 +9,8 @@ interface UserContextType {
     isHydrated: boolean;
     userInfo: UserInfoType;
     updateUserInfo: (updates: Partial<UserInfoType>) => void;
-    signIn: (identifier?: string) => void;
+    addPoints: (points: number) => void;
+    signIn: (user?: Partial<UserInfoType>) => void;
     signUp: (username?: string) => void;
     signOut: () => void;
 }
@@ -19,6 +20,7 @@ const USER_STORAGE_KEY = 'user';
 const defaultStoredUser: StoredUserInfo = {
     name: defaultUserInfo.name,
     profileUri: null,
+    points: defaultUserInfo.points,
     isAuthenticated: false,
 };
 
@@ -33,6 +35,7 @@ const toStoredUser = (userInfo: UserInfoType, isAuthenticated: boolean): StoredU
         typeof userInfo.profile === 'object' && userInfo.profile !== null && 'uri' in userInfo.profile
             ? userInfo.profile.uri ?? null
             : null,
+    points: userInfo.points,
     isAuthenticated,
 });
 
@@ -43,11 +46,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const loadUser = async () => {
-            const storedUser = await readJsonFile<StoredUserInfo>(USER_STORAGE_KEY, defaultStoredUser);
+            const storedUser = await readJsonFile<StoredUserInfo & { point?: number }>(
+                USER_STORAGE_KEY,
+                defaultStoredUser
+            );
 
             setUserInfo({
                 name: storedUser.name || defaultUserInfo.name,
                 profile: getProfileSource(storedUser.profileUri),
+                points: storedUser.points ?? storedUser.point ?? defaultUserInfo.points,
             });
             setIsAuthenticated(storedUser.isAuthenticated);
             setIsHydrated(true);
@@ -68,9 +75,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUserInfo((prev) => ({ ...prev, ...updates }));
     };
 
-    const signIn = (identifier?: string) => {
-        if (identifier?.trim()) {
-            setUserInfo((prev) => ({ ...prev, name: identifier.trim() }));
+    const addPoints = (points: number) => {
+        if (points <= 0) {
+            return;
+        }
+
+        setUserInfo((prev) => ({ ...prev, points: prev.points + points }));
+    };
+
+    const signIn = (user?: Partial<UserInfoType>) => {
+        if (user) {
+            setUserInfo((prev) => ({ ...prev, ...user }));
         }
         setIsAuthenticated(true);
     };
@@ -88,7 +103,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <UserContext.Provider value={{ isAuthenticated, isHydrated, userInfo, updateUserInfo, signIn, signUp, signOut }}>
+        <UserContext.Provider value={{ isAuthenticated, isHydrated, userInfo, updateUserInfo, addPoints, signIn, signUp, signOut }}>
             {children}
         </UserContext.Provider>
     );

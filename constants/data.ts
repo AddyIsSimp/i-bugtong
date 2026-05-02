@@ -6,11 +6,13 @@ import { icons } from "./icons";
 export interface UserInfoType {
     name: string;
     profile: ImageSourcePropType; // Can be number (local) or { uri: string }
+    points: number;
 }
 
 export interface StoredUserInfo {
     name: string;
     profileUri: string | null;
+    points: number;
     isAuthenticated: boolean;
 }
 
@@ -33,6 +35,7 @@ export interface GameAssetConfig {
 export const defaultUserInfo: UserInfoType = {
     name: "John Doe",
     profile: images.avatar,
+    points: 0,
 };
 
 export const tabs = [
@@ -54,10 +57,15 @@ export const initialLevels: LevelConfig[] = [
 ];
 
 export const initialGameAssets: GameAssetConfig[] = [
-    { name: 'diamond', quantity: 3, icon: custom_icons.diamond },
-    { name: 'life', quantity: 2, icon: custom_icons.heart },
+    { name: 'diamond', quantity: 10, icon: custom_icons.diamond },
     { name: 'hint', quantity: 10, icon: custom_icons.hint },
+    { name: 'life', quantity: 5, icon: custom_icons.heart },
 ];
+
+export const HINT_DIAMOND_COST = 3;
+export const LIFE_DIAMOND_COST = 4;
+export const MAX_LIFE = 5;
+export const LIFE_REFILL_INTERVAL_MS = 3 * 60 * 1000;
 
 export const rankingList = [
     // Top 5 ranks

@@ -14,6 +14,7 @@ export default function CaptureModal({ visible, onClose, onImageCaptured }: Capt
     const [activeTab, setActiveTab] = useState<'camera' | 'gallery'>('camera');
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [cameraReady, setCameraReady] = useState(false);
+    const [cameraFacing, setCameraFacing] = useState<'front' | 'back'>('back');
     const cameraRef = useRef<CameraView>(null);
 
     // Use the camera permissions hook
@@ -78,6 +79,10 @@ export default function CaptureModal({ visible, onClose, onImageCaptured }: Capt
         setSelectedImage(null);
     };
 
+    const toggleCameraFacing = () => {
+        setCameraFacing((prev) => (prev === 'back' ? 'front' : 'back'));
+    };
+
     // Request permissions on mount for camera tab
     if (activeTab === 'camera' && !permission?.granted && permission?.canAskAgain !== false) {
         requestPermission();
@@ -133,12 +138,23 @@ export default function CaptureModal({ visible, onClose, onImageCaptured }: Capt
                                 </TouchableOpacity>
                             </View>
                         ) : (
-                            <CameraView
-                                ref={cameraRef}
-                                style={styles.camera}
-                                facing="back"
-                                onCameraReady={() => setCameraReady(true)}
-                            />
+                            <View className="flex-1">
+                                <CameraView
+                                    ref={cameraRef}
+                                    style={styles.camera}
+                                    facing={cameraFacing}
+                                    onCameraReady={() => setCameraReady(true)}
+                                />
+                                <TouchableOpacity
+                                    className="absolute top-3 right-3 bg-black/60 px-3 py-2 rounded-full flex-row items-center gap-2"
+                                    onPress={toggleCameraFacing}
+                                >
+                                    <MaterialIcons name="flip-camera-ios" size={20} color="white" />
+                                    <Text className="text-white font-medium">
+                                        {cameraFacing === 'back' ? 'Front' : 'Back'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         )
                     ) : (
                         <View className="flex-1 items-center justify-center bg-gray-800">

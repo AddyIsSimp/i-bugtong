@@ -30,6 +30,20 @@ declare global {
         error?: string,
     }
 
+    interface LoginResponseData {
+        id: number;
+        username: string;
+        email: string;
+        points: number;
+        diamond: number;
+        life: number;
+        hint: number;
+    }
+
+    interface LoginAPIResponse extends APIResponse {
+        data?: LoginResponseData;
+    }
+
     interface CreateAccountRequest {
         username: string;
         email: string;

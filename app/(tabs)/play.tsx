@@ -1,10 +1,11 @@
 import { router, useFocusEffect } from "expo-router";
 import { styled } from "nativewind";
 import React, { useCallback } from "react";
-import { Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
+import { ImageBackground, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
 import Avatar from "@/components/Avatar";
+import GameAssetHeader from "@/components/GameAssetHeader";
 import ProfileModal from "@/components/ProfileModal";
 import { Separator } from "@/components/Separator";
 import SettingModal from "@/components/SettingModal";
@@ -12,7 +13,7 @@ import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
 import { getBugtongStats, isAllBugtongsSolved, toLowerCase } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
-import clsx from "clsx";
+import { clsx } from "clsx";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
@@ -21,7 +22,7 @@ export default function Play() {
     const [profileVisible, setProfileVisible] = React.useState(false);
     const [settingVisible, setSettingVisible] = React.useState(false);
     const { userInfo } = useUser();
-    const { bugtongs, gameAssets, levels, setLevels } = useGame();
+    const { bugtongs, levels, setLevels } = useGame();
 
     // Navigate Difficulty button
     const handleLevelPress = (level: typeof levels[0]) => {
@@ -78,32 +79,35 @@ export default function Play() {
                 {/* Game Content */}
                 <View className="flex-1">
                     {/* Game Assets */}
-                    <View className="flex-row items-center justify-between px-6 py-1 mb-5 bg-white">
-                        {gameAssets.map((asset) => (
-                            <View className="flex-row items-center justify-center gap-1" key={asset.name}>
-                                <Text className="text-md text-primary">{asset.quantity}</Text>
-                                <Image source={asset.icon} className="w-5 h-5" style={{ width: 20, height: 20 }} />
-                            </View>
-                        ))}
-                    </View>
-
-                    {/* Avatar Section */}
-                    <View className="flex-row justify-between px-4 mb-4">
-                        <TouchableOpacity onPress={() => setProfileVisible(true)}>
-                            <View className="flex-row items-center">
-                                <Avatar size='md' />
-                                <View className="-z-1 ml-[-12px] bg-accent rounded-r-full rounded-l-md px-4 py-2 shadow-md">
-                                    <Text className="text-white font-semibold text-base">
-                                        {userInfo.name}
-                                    </Text>
-                                </View>
-                            </View>
-                        </TouchableOpacity>
+                    <View className="flex-row px-3">
+                        <GameAssetHeader variant="full" />
                         <TouchableOpacity className="p-2 h-fit w-fit bg-gray-700 rounded-full flex items-center 
                             justify-center" style={{ width: 40, height: 40 }}
                             onPress={() => setSettingVisible(!settingVisible)}>
                             <MaterialIcons name='settings' size={20} color='white' />
                         </TouchableOpacity>
+                    </View>
+
+                    {/* Avatar Section */}
+                    <View className="flex-row justify-between px-4 mb-4">
+                        <TouchableOpacity onPress={() => setProfileVisible(true)} className="flex-1">
+                            <View className="flex-row items-center">
+                                <Avatar size='lg' />
+                                <View className="flex-col ml-[-13px]">
+                                    <View className="-z-1 bg-accent rounded-r-full rounded-l-md px-4 w-35 py-2 shadow-md">
+                                        <Text className="text-white font-semibold text-base">
+                                            {userInfo.name}
+                                        </Text>
+                                    </View>
+                                    <View className="-z-1 bg-primary rounded-br-full rounded-l-md px-4 w-20 py-0.5 shadow-md">
+                                        <Text className="text-white font-semibold text-base">
+                                            {userInfo.points}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+
                     </View>
 
 

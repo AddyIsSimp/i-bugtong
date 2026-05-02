@@ -15,6 +15,16 @@ export interface SubmitAnswerResponse {
     image_url?: string;  // Add this to capture the returned image URL
 }
 
+export interface LoginResponseData {
+    id: number;
+    username: string;
+    email: string;
+    points: number;
+    diamond: number;
+    life: number;
+    hint: number;
+}
+
 export const submitAnswer = async (
     imageUri: string,
     bugtongId: number,
@@ -125,29 +135,41 @@ export const createAccount = async (
 export const login = async (
     identification: string,
     password: string
-): Promise<APIResponse> => {
+): Promise<LoginAPIResponse> => {
     try {
-        const result = await api.post(
-            '/api/login', {
-            identification,
-            password
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
+        const result = await api.post<LoginResponseData>(
+            '/api/login',
+            {
+                identification,
+                password,
             },
-        }
-        )
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
 
         return {
             status: result.status,
-            message: result.data?.message || 'Login successfully'
-        }
+            message: 'Login successfully',
+            data: result.data,
+        };
     } catch (error) {
+        console.error('Error logging in:', error);
+
+        if (axios.isAxiosError(error)) {
+            return {
+                status: error.response?.status || 500,
+                error: error.response?.data?.detail || error.message || 'Failed to login',
+            };
+        }
+
         return {
             status: 500,
-            error: 'Network error occured. Please check your connection.'
-        }
+            error: 'Network error occured. Please check your connection.',
+        };
     }
-}
+};
 
 export default api;

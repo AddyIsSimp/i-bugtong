@@ -1,7 +1,8 @@
 import { styled } from "nativewind";
-import { Alert, Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ImageBackground, TouchableOpacity, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
+import GameAssetHeader from "@/components/GameAssetHeader";
 import { gameBG } from "@/constants/data";
 import { colors } from "@/constants/theme";
 import { useGame } from "@/contexts/GameContext";
@@ -14,7 +15,7 @@ const SafeAreaView = styled(RNSafeAreaView);
 function LayoutContent() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { isGameActive, gameAssets } = useGame();
+    const { isGameActive, consumeLife } = useGame();
 
     const getDifficultyString = (difficulty: number | string): string => {
         const diff = Number(difficulty);
@@ -31,7 +32,7 @@ function LayoutContent() {
         if (isGameActive) {
             Alert.alert(
                 'Back to Menu',
-                'This will not save your progress. Do you want to continue?',
+                'This will not save your progress and will cost 1 life. Do you want to continue?',
                 [
                     {
                         text: 'Cancel',
@@ -39,11 +40,9 @@ function LayoutContent() {
                         style: 'cancel'
                     },
                     {
-                        text: 'OK',
+                        text: 'Back',
                         onPress: () => {
-                            console.log("OK pressed - navigating back");
-                            // Force reset the game state before navigating
-                            // This will be handled by the cleanup in GamePage
+                            consumeLife(1);
                             router.push('/(tabs)/play');
                         },
                         style: 'default'
@@ -71,14 +70,7 @@ function LayoutContent() {
                             className="font-normal"
                         />
                     </TouchableOpacity>
-                    <View className="flex-row gap-7 justify-between bg-white/30 px-5 items-center rounded-full">
-                        {gameAssets.map((asset) => (
-                            <View className="flex-row items-end justify-end gap-1 px-0 py-1" key={asset.name}>
-                                <Text className="text-sm text-primary">{asset.quantity}</Text>
-                                <Image source={asset.icon} className="w-5 h-5" />
-                            </View>
-                        ))}
-                    </View>
+                    <GameAssetHeader variant="pill" />
                 </View>
             </View>
 

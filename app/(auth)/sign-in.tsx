@@ -1,19 +1,23 @@
 import PasswordInput from "@/components/PasswordInput";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
 import TermsModal from "@/components/TermsModal";
+import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
+import { login } from "@/services/api";
 import { router } from "expo-router";
 import { useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Signin() {
   const { signIn } = useUser();
+  const { syncGameAssetsFromLogin } = useGame();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!username.trim()) {
       Alert.alert("Missing username", "Please enter your username or email.");
       return;
@@ -24,9 +28,28 @@ export default function Signin() {
       return;
     }
 
+    try {
+      setIsSubmitting(true);
 
-    signIn(username);
-    router.replace("/(tabs)/play");
+      const result = await login(username.trim(), password);
+
+      if (result.status !== 200 || !result.data) {
+        Alert.alert("Login failed", result.error || "Invalid credentials.");
+        return;
+      }
+
+      signIn({ name: result.data.username, points: result.data.points });
+      syncGameAssetsFromLogin({
+        diamond: result.data.diamond,
+        life: result.data.life,
+        hint: result.data.hint,
+      });
+      router.replace("/(tabs)/play");
+    } catch (error) {
+      Alert.alert("Login failed", error instanceof Error ? error.message : "Something went wrong during login.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -71,8 +94,12 @@ export default function Signin() {
 
         <View className="flex-col items-center gap-4">
           <View className="flex items-center justify-center w-full">
-            <TouchableOpacity className="bg-accent w-4/5 px-4 py-3 rounded-full" onPress={handleLogin}>
-              <Text className="text-white text-center">Login</Text>
+            <TouchableOpacity
+              className={`bg-accent w-4/5 px-4 py-3 rounded-full ${isSubmitting ? 'opacity-70' : ''}`}
+              onPress={handleLogin}
+              disabled={isSubmitting}
+            >
+              <Text className="text-white text-center">{isSubmitting ? 'Logging in...' : 'Login'}</Text>
             </TouchableOpacity>
           </View>
           <View className="flex-row items-center gap-1">

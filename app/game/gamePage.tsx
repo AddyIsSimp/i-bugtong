@@ -12,6 +12,7 @@ import Timer from '@/components/Timer';
 import { custom_icons } from "@/constants/custom_icons";
 import { initialLevels } from "@/constants/data";
 import { useGame } from '@/contexts/GameContext';
+import { useUser } from "@/contexts/UserContext";
 import { getNextUnsolvedBugtong } from "@/utils";
 
 export default function GamePage() {
@@ -20,7 +21,8 @@ export default function GamePage() {
     const [captureModalVisible, setCaptureModalVisible] = useState(false);
 
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
-    const { bugtongs, gameAssets, levels, isGameActive, setBugtongs, setGameAssets, setIsGameActive } = useGame();
+    const { bugtongs, gameAssets, levels, isGameActive, setBugtongs, setIsGameActive, addDiamonds, consumeHint, consumeLife } = useGame();
+    const { addPoints } = useUser();
     const [timeExpired, setTimeExpired] = useState(false);
     const [timerKey, setTimerKey] = useState(0);
     const params = useLocalSearchParams();
@@ -179,31 +181,83 @@ export default function GamePage() {
                 prev.map(bugtong => (bugtong.id === currentBugtong.id ? updatedBugtong : bugtong))
             );
 
-            // Deduct hint from gameAssets
-            setGameAssets(prev => prev.map(asset =>
-                asset.name === 'hint'
-                    ? { ...asset, quantity: Math.max(0, asset.quantity - 1) }
-                    : asset
-            ));
+            consumeHint(1);
 
             Alert.alert("Hint Unlocked!", lockedHints[0]?.text || "Hint unlocked!");
         }
     };
 
     const [resultModalVisible, setResultModalVisible] = useState(false);
-    const [answerResult, setAnswerResult] = useState<{ isCorrect: boolean; timeSpent: number }>({
+    const [answerResult, setAnswerResult] = useState<{
+        isCorrect: boolean;
+        timeSpent: number;
+        confidenceScore: number;
+        pointsEarned: number;
+        diamondsEarned: number;
+        remainingSeconds: number;
+    }>({
         isCorrect: false,
-        timeSpent: 0
+        timeSpent: 0,
+        confidenceScore: 0,
+        pointsEarned: 0,
+        diamondsEarned: 0,
+        remainingSeconds: 0,
     });
 
     const startTimeRef = useRef<number>(0);
+    const difficultyMultiplierMap: Record<Difficulty, number> = {
+        easy: 1,
+        medium: 3,
+        hard: 5,
+    };
 
-    const getRewards = (timeSpent: number) => {
-        let diamonds = 0;
-        diamonds += 1;
-        if (timeSpent < 60) diamonds += 2;
-        diamonds += 1;
-        return diamonds;
+    const calculatePoints = (isCorrect: boolean, timeSpent: number, confidenceScore: number) => {
+        if (!isCorrect) {
+            return {
+                basePoints: 0,
+                timePoints: 0,
+                confidencePoints: 0,
+                totalPoints: 0,
+                remainingSeconds: 0,
+            };
+        }
+
+        const remainingSeconds = Math.max(0, Math.floor(initialTime - timeSpent));
+        const multiplier = difficultyMultiplierMap[difficultyString as Difficulty] ?? 1;
+        const basePoints = 200;
+        const timePoints = remainingSeconds * multiplier;
+        const normalizedConfidence =
+            confidenceScore > 0 && confidenceScore <= 1
+                ? confidenceScore * 100
+                : confidenceScore;
+        const confidencePoints = Math.max(0, Math.round(normalizedConfidence));
+
+        return {
+            basePoints,
+            timePoints,
+            confidencePoints,
+            totalPoints: basePoints + timePoints + confidencePoints,
+            remainingSeconds,
+        };
+    };
+
+    const calculateDiamonds = (isCorrect: boolean, timeSpent: number) => {
+        if (!isCorrect) {
+            return {
+                correctAnswerDiamonds: 0,
+                fastAnswerDiamonds: 0,
+                totalDiamonds: 0,
+            };
+        }
+
+        const correctAnswerDiamonds = 1;
+        const fastAnswerDiamonds = timeSpent < 60 ? 2 : 0;
+
+        return {
+            correctAnswerDiamonds,
+            fastAnswerDiamonds,
+            totalDiamonds: correctAnswerDiamonds + fastAnswerDiamonds,
+        };
     };
 
     const startGame = () => {
@@ -296,6 +350,33 @@ export default function GamePage() {
         }
     };
 
+    const applyAnswerOutcome = (isCorrect: boolean, timeSpent: number, confidenceScore: number) => {
+        const points = calculatePoints(isCorrect, timeSpent, confidenceScore);
+        const diamonds = calculateDiamonds(isCorrect, timeSpent);
+
+        if (isCorrect) {
+            const solvedBugtong = currentBugtong ? { ...currentBugtong, solved: true } : null;
+
+            if (solvedBugtong) {
+                setCurrentBugtong(solvedBugtong);
+                setBugtongs((prev) =>
+                    prev.map((bugtong) =>
+                        bugtong.id === solvedBugtong.id
+                            ? { ...bugtong, solved: true }
+                            : bugtong
+                    )
+                );
+            }
+
+            addPoints(points.totalPoints);
+            addDiamonds(diamonds.totalDiamonds);
+        } else {
+            consumeLife(1);
+        }
+
+        return { points, diamonds };
+    };
+
     //FOR TESTING
     const handleSubmit = () => {
         if (!capturedImage) {
@@ -314,17 +395,18 @@ export default function GamePage() {
         setIsGameActive(false);
 
         const timeSpent = (Date.now() - startTimeRef.current) / 1000;
-        const diamondsEarned = getRewards(timeSpent);
+        const isCorrect = true;
+        const confidenceScore = 100;
 
-        setGameAssets(prev => prev.map(asset =>
-            asset.name === 'diamond'
-                ? { ...asset, quantity: asset.quantity + diamondsEarned }
-                : asset
-        ));
+        const rewards = applyAnswerOutcome(isCorrect, timeSpent, confidenceScore);
 
         setAnswerResult({
-            isCorrect: true,
-            timeSpent: timeSpent
+            isCorrect,
+            timeSpent,
+            confidenceScore,
+            pointsEarned: rewards.points.totalPoints,
+            diamondsEarned: rewards.diamonds.totalDiamonds,
+            remainingSeconds: rewards.points.remainingSeconds,
         });
         setResultModalVisible(true);
     }
@@ -371,6 +453,7 @@ export default function GamePage() {
 
     //         console.log('API Response:', result);
 
+    //         applyAnswerOutcome(result.is_correct, timeSpent);
     //         // Show result modal with API response
     //         setAnswerResult({
     //             isCorrect: result.is_correct,
@@ -535,6 +618,11 @@ export default function GamePage() {
                 imageAnswer={capturedImage ? { uri: capturedImage } : null}
                 isCorrect={answerResult.isCorrect}
                 timeSpent={answerResult.timeSpent}
+                pointsEarned={answerResult.pointsEarned}
+                diamondsEarned={answerResult.diamondsEarned}
+                confidenceScore={answerResult.confidenceScore}
+                remainingSeconds={answerResult.remainingSeconds}
+                difficulty={difficultyString as Difficulty}
             />
 
             {/* Game Info Modal */}

@@ -3,7 +3,7 @@ import { custom_icons } from "@/constants/custom_icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Image, ImageSourcePropType, Modal, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { Image, ImageSourcePropType, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 interface ResultProps {
     visible: boolean;
@@ -13,23 +13,38 @@ interface ResultProps {
     imageAnswer: ImageSourcePropType | null;
     isCorrect: boolean;
     timeSpent?: number;
+    pointsEarned?: number;
+    diamondsEarned?: number;
+    confidenceScore?: number;
+    remainingSeconds?: number;
+    difficulty?: Difficulty;
 }
 
-export default function ResultModal({ visible, onClose, onNext, bugtong, imageAnswer, isCorrect, timeSpent = 0 }: ResultProps) {
-    const [showStatistic, setShowStatistic] = useState(true);
+const difficultyMultiplierMap: Record<Difficulty, number> = {
+    easy: 1,
+    medium: 3,
+    hard: 5,
+};
 
-    // Calculate rewards based on performance
-    const getRewards = () => {
-        let diamonds = 0;
-        if (isCorrect) {
-            diamonds += 1;
-            // Bonus for fast answer
-            if (timeSpent < 60) diamonds += 2;
-            // Perfect score bonus
-            diamonds += 1;
-        }
-        return diamonds;
-    };
+export default function ResultModal({
+    visible,
+    onClose,
+    onNext,
+    bugtong,
+    imageAnswer,
+    isCorrect,
+    timeSpent = 0,
+    pointsEarned = 0,
+    diamondsEarned = 0,
+    confidenceScore = 0,
+    remainingSeconds = 0,
+    difficulty = 'easy',
+}: ResultProps) {
+    const [showStatistic, setShowStatistic] = useState(true);
+    const difficultyMultiplier = difficultyMultiplierMap[difficulty];
+    const basePoints = isCorrect ? 200 : 0;
+    const timePoints = isCorrect ? remainingSeconds * difficultyMultiplier : 0;
+    const awardedConfidenceScore = isCorrect ? confidenceScore : 0;
 
     const handleBackToMenu = () => {
         onClose();
@@ -50,15 +65,14 @@ export default function ResultModal({ visible, onClose, onNext, bugtong, imageAn
             visible={visible}
             onRequestClose={onClose}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View className="flex-1 items-center justify-center bg-gray-900/70">
-                    <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                        <View style={{ height: "85%", width: "75%" }} className="bg-white rounded-2xl p-4 gap-4">
-                            <ScrollView
-                                className="rounded-2xl"
-                                // showsVerticalScrollIndicator={true}
-                                contentContainerStyle={{ gap: 24 }}
-                            >
+            <View className="flex-1 items-center justify-center bg-gray-900/70">
+                <View style={{ height: "85%", width: "75%" }} className="bg-white rounded-2xl p-4 gap-4">
+                    <ScrollView
+                        className="rounded-2xl"
+                        contentContainerStyle={{ gap: 24 }}
+                        keyboardShouldPersistTaps="handled"
+                        nestedScrollEnabled
+                    >
                                 {/* Header - Success/Failure */}
                                 <View className="items-center">
                                     {isCorrect ? (
@@ -78,11 +92,18 @@ export default function ResultModal({ visible, onClose, onNext, bugtong, imageAn
 
                                 {/* Reward Display */}
                                 {isCorrect && (
-                                    <View className="flex-row items-center justify-between gap-2 px-2 bg-accent/20 rounded-xl">
-                                        <Text className="text-md font-medium">Rewards</Text>
-                                        <View className="flex-row items-center justify-center gap-2 p-2 rounded-lg">
-                                            <Image source={custom_icons.diamond} className="w-5 h-5" />
-                                            <Text className="text-xl font-bold text-yellow-600">+ {getRewards()}</Text>
+                                    <View className="flex-col gap-0 px-3 py-2 bg-accent/20 rounded-xl">
+                                        <Text className="text-sm font-medium">Rewards</Text>
+                                        <View className="flex-row items-center justify-between">
+                                            <Text className="text-gray-700 font-medium">Points</Text>
+                                            <Text className="text-lg font-bold text-primary">+ {pointsEarned}</Text>
+                                        </View>
+                                        <View className="flex-row items-center justify-between">
+                                            <Text className="text-gray-700 font-medium">Diamonds</Text>
+                                            <View className="flex-row items-center justify-center gap-1">
+                                                <Image source={custom_icons.diamond} className="w-4 h-4" />
+                                                <Text className="text-lg font-bold">+ {diamondsEarned}</Text>
+                                            </View>
                                         </View>
                                     </View>
                                 )}
@@ -128,87 +149,103 @@ export default function ResultModal({ visible, onClose, onNext, bugtong, imageAn
 
                                 {/* Statistics Content */}
                                 {showStatistic && (
-                                    <ScrollView className="-mt-5 bg-gray-50 p-2 rounded-lg"
+                                    <ScrollView
+                                        className="-mt-5 bg-gray-50 p-2 rounded-lg"
                                         showsVerticalScrollIndicator={true}
-                                        contentContainerStyle={{ gap: 8 }}>
-                                        {/* Correct Answer Stat */}
+                                        contentContainerStyle={{ gap: 6 }}
+                                        keyboardShouldPersistTaps="handled"
+                                        nestedScrollEnabled
+                                    >
+                                        <Text className="font-bold text-md text-gray-800">Points</Text>
+
                                         <View className="flex-row justify-between items-center">
-                                            <Text className="text-gray-700">Correct Answer</Text>
-                                            <View className="flex-row items-center gap-1">
-                                                {isCorrect && (
-                                                    <>
-                                                        <Image source={custom_icons.diamond} className="w-4 h-4" />
-                                                        <Text className="text-green-600 font-semibold">+ 1</Text>
-                                                    </>
-                                                )}
-                                                {!isCorrect && (
-                                                    <Text className="text-red-500">0</Text>
-                                                )}
-                                            </View>
+                                            <Text className="text-gray-700 text-sm">Correct Answer</Text>
+                                            <Text className={isCorrect ? "text-green-600 font-semibold text-sm" : "text-red-500"}>
+                                                {isCorrect ? `+ ${basePoints}` : "0"}
+                                            </Text>
                                         </View>
 
-                                        {/* Time Stat */}
                                         <View className="flex-row justify-between items-center">
-                                            <Text className="text-gray-700">Time: {timeSpent.toFixed(1)}s</Text>
-                                            <View className="flex-row items-center gap-1">
-                                                {timeSpent < 30 && (
-                                                    <>
-                                                        <Image source={custom_icons.diamond} className="w-4 h-4" />
-                                                        <Text className="text-green-600 font-semibold">+ 2</Text>
-                                                    </>
-                                                )}
-                                            </View>
+                                            <Text className="text-gray-700 text-sm">
+                                                Time Bonus ({remainingSeconds}s x {difficultyMultiplier})
+                                            </Text>
+                                            <Text className={isCorrect ? "text-sm text-green-600 font-semibold" : "text-red-500"}>
+                                                {isCorrect ? `+ ${timePoints}` : "0"}
+                                            </Text>
                                         </View>
 
-                                        {/* Trust Score Stat */}
                                         <View className="flex-row justify-between items-center">
-                                            <Text className="text-gray-700">Trust Score</Text>
-                                            <View className="flex-row items-center gap-1">
-                                                {isCorrect && (
-                                                    <>
-                                                        <Image source={custom_icons.diamond} className="w-4 h-4" />
-                                                        <Text className="text-green-600 font-semibold">+ 1</Text>
-                                                    </>
-                                                )}
-                                            </View>
+                                            <Text className="text-gray-700 text-sm">Time Spent</Text>
+                                            <Text className="text-gray-700 text-sm">{timeSpent.toFixed(1)}s</Text>
                                         </View>
 
-                                        {/* Total Reward Summary */}
-                                        <View className="border-t border-gray-200 mt-2 pt-2 flex-row justify-between items-center">
-                                            <Text className="font-bold text-gray-800">Total Rewards</Text>
+                                        <View className="flex-row justify-between -mb-2 items-center">
+                                            <Text className="text-gray-700 text-sm">Confidence Score</Text>
+                                            <Text className={isCorrect ? "text-sm text-green-600 font-semibold" : "text-red-500"}>
+                                                {isCorrect ? `+ ${awardedConfidenceScore}` : "0"}
+                                            </Text>
+                                        </View>
+
+                                        <View className="border-t border-gray-200 mt-2 flex-row justify-between items-center">
+                                            <Text className="font-bold text-sm text-gray-800 mt-1">Total Points</Text>
+                                            <Text className="text-sm font-bold text-primary">+ {pointsEarned}</Text>
+                                        </View>
+
+                                        <Text className="font-bold text-gray-800 mt-4">Diamonds</Text>
+
+                                        <View className="flex-row justify-between items-center">
+                                            <Text className="text-gray-700 text-sm">Correct Answer Bonus</Text>
                                             <View className="flex-row items-center gap-1">
                                                 <Image source={custom_icons.diamond} className="w-4 h-4" />
-                                                <Text className="text-md font-bold text-yellow-600">+ {getRewards()}</Text>
+                                                <Text className={isCorrect ? "text-green-600 font-semibold text-sm" : "text-red-500"}>
+                                                    {isCorrect ? "+ 1" : "0"}
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        <View className="flex-row justify-between items-center">
+                                            <Text className="text-gray-700 text-sm">Fast Answer Bonus</Text>
+                                            <View className="flex-row items-center gap-1">
+                                                <Image source={custom_icons.diamond} className="w-4 h-4" />
+                                                <Text className={isCorrect && timeSpent < 60 ? "text-sm text-green-600 font-semibold" : "text-red-500"}>
+                                                    {isCorrect && timeSpent < 60 ? "+ 2" : "0"}
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        <View className="border-t border-gray-200 mt-1 pt-1 flex-row justify-between items-center">
+                                            <Text className="font-bold text-gray-800 text-sm">Total Diamonds</Text>
+                                            <View className="flex-row items-center gap-1">
+                                                <Image source={custom_icons.diamond} className="w-4 h-4" />
+                                                <Text className="text-md font-bold text-yellow-600 text-sm">+ {diamondsEarned}</Text>
                                             </View>
                                         </View>
                                     </ScrollView>
                                 )}
 
 
-                            </ScrollView>
-                            {/* Action Buttons */}
-                            <View className="flex-row gap-2 mt-2">
-                                <TouchableOpacity
-                                    className="flex-1 bg-gray-500 py-3 rounded-full"
-                                    onPress={handleBackToMenu}
-                                    activeOpacity={0.7}
-                                >
-                                    <Text className="text-white text-center font-semibold">Back</Text>
-                                </TouchableOpacity>
-                                {isCorrect && (
-                                    <TouchableOpacity
-                                        className="flex-1 bg-blue-500 py-3 rounded-full"
-                                        onPress={handleNext}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text className="text-white text-center font-semibold">Next</Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        </View>
-                    </TouchableWithoutFeedback>
+                    </ScrollView>
+                    {/* Action Buttons */}
+                    <View className="flex-row gap-2 mt-2">
+                        <TouchableOpacity
+                            className="flex-1 bg-gray-500 py-3 rounded-full"
+                            onPress={handleBackToMenu}
+                            activeOpacity={0.7}
+                        >
+                            <Text className="text-white text-center font-semibold">Back</Text>
+                        </TouchableOpacity>
+                        {isCorrect && (
+                            <TouchableOpacity
+                                className="flex-1 bg-blue-500 py-3 rounded-full"
+                                onPress={handleNext}
+                                activeOpacity={0.7}
+                            >
+                                <Text className="text-white text-center font-semibold">Next</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
-            </TouchableWithoutFeedback>
+            </View>
         </Modal>
     );
 }
