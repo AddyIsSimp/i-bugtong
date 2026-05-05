@@ -7,6 +7,7 @@ export interface UserInfoType {
     id: number | null;
     name: string;
     profile: ImageSourcePropType; // Can be number (local) or { uri: string }
+    profileKey?: string | null;
     points: number;
 }
 
@@ -14,8 +15,10 @@ export interface StoredUserInfo {
     id: number | null;
     name: string;
     profileUri: string | null;
+    profileKey: string | null;
     points: number;
     isAuthenticated: boolean;
+    hasCompletedProfileSetup: boolean;
 }
 
 export interface LevelConfig {
@@ -34,10 +37,17 @@ export interface GameAssetConfig {
     icon: ImageSourcePropType;
 }
 
+export interface ProfileCharacterChoice {
+    key: string;
+    label: string;
+    source: ImageSourcePropType;
+}
+
 export const defaultUserInfo: UserInfoType = {
     id: null,
     name: "John Doe",
     profile: images.avatar,
+    profileKey: null,
     points: 0,
 };
 
@@ -57,6 +67,13 @@ export const initialLevels: LevelConfig[] = [
     { name: "Easy", difficulty: 1, background: images.stacked_peaks_horizontal, time: 150, hints: 3, freeHint: 1, locked: false },
     { name: "Medium", difficulty: 2, background: images.stacked_waves_horizontal, time: 120, hints: 2, freeHint: 0, locked: true },
     { name: "Hard", difficulty: 3, background: images.layered_peaks_horizontal, time: 100, hints: 1, freeHint: 0, locked: true },
+];
+
+export const profileCharacterChoices: ProfileCharacterChoice[] = [
+    { key: 'boy1', label: 'Boy 1', source: images.boy1 },
+    { key: 'girl1', label: 'Girl 1', source: images.girl1 },
+    { key: 'boy2', label: 'Boy 2', source: images.boy2 },
+    { key: 'girl2', label: 'Girl 2', source: images.girl2 },
 ];
 
 export const initialGameAssets: GameAssetConfig[] = [
@@ -217,3 +234,11 @@ export const cloneInitialBugtongList = (): BugtongProps[] =>
         ...bugtong,
         hint: bugtong.hint?.map((hint) => ({ ...hint })) ?? [],
     }));
+
+export const getProfileCharacterSource = (profileKey: string | null | undefined): ImageSourcePropType => {
+    if (!profileKey) {
+        return images.avatar;
+    }
+
+    return profileCharacterChoices.find((choice) => choice.key === profileKey)?.source ?? images.avatar;
+};

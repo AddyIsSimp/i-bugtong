@@ -17,6 +17,14 @@ export interface SubmitAnswerResponse {
     user_id: string | number;
 }
 
+export interface UploadProfileAvatarResponse {
+    message?: string;
+    avatar_url?: string;
+    image_url?: string;
+    profile_url?: string;
+    user_id?: string | number;
+}
+
 export interface LoginResponseData {
     id: number;
     username: string;
@@ -43,6 +51,12 @@ export interface SubmitAnswerRequest {
         totalPoints: number;
     };
     difficultyMultiplier: number;
+}
+
+export interface UploadProfileAvatarRequest {
+    userId: string | number;
+    imageUri: string;
+    characterKey?: string;
 }
 
 export const submitAnswer = async (
@@ -119,6 +133,48 @@ export const checkApiHealth = async (): Promise<boolean> => {
     }
 
     return false;
+};
+
+export const uploadProfileAvatar = async (
+    { userId, imageUri, characterKey }: UploadProfileAvatarRequest,
+): Promise<UploadProfileAvatarResponse> => {
+    const formData = new FormData();
+    const filename = imageUri.split('/').pop() || `avatar-${Date.now()}.jpg`;
+    const extension = filename.split('.').pop()?.toLowerCase();
+    const imageType = extension === 'png' ? 'image/png' : 'image/jpeg';
+
+    formData.append('image', {
+        uri: imageUri,
+        name: filename,
+        type: imageType,
+    } as any);
+    formData.append('user_id', userId.toString());
+
+    if (characterKey) {
+        formData.append('character_key', characterKey);
+    }
+
+    try {
+        const response = await api.post('/api/profile-avatar', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Error uploading profile avatar:', error);
+        if (axios.isAxiosError(error)) {
+            if (error.response?.status === 404) {
+                // Fallback for servers that don't expose avatar upload yet.
+                return {
+                    message: 'Profile avatar endpoint is not available on the server yet.',
+                };
+            }
+            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to upload profile avatar');
+        }
+        throw new Error('Network error occurred');
+    }
 };
 
 

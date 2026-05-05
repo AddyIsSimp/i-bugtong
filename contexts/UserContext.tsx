@@ -1,5 +1,4 @@
-import { defaultUserInfo, StoredUserInfo, UserInfoType } from '@/constants/data';
-import images from '@/constants/images';
+import { defaultUserInfo, getProfileCharacterSource, StoredUserInfo, UserInfoType } from '@/constants/data';
 import { readJsonFile, writeJsonFile } from '@/utils/localStorage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { ImageSourcePropType } from 'react-native';
@@ -7,9 +6,11 @@ import { ImageSourcePropType } from 'react-native';
 interface UserContextType {
     isAuthenticated: boolean;
     isHydrated: boolean;
+    hasCompletedProfileSetup: boolean;
     userInfo: UserInfoType;
     updateUserInfo: (updates: Partial<UserInfoType>) => void;
     addPoints: (points: number) => void;
+    completeProfileSetup: (updates: Pick<UserInfoType, 'profile'> & Partial<Pick<UserInfoType, 'profileKey'>>) => void;
     signIn: (user?: Partial<UserInfoType>) => void;
     signUp: (username?: string) => void;
     signOut: () => void;
@@ -21,14 +22,16 @@ const defaultStoredUser: StoredUserInfo = {
     id: defaultUserInfo.id,
     name: defaultUserInfo.name,
     profileUri: null,
+    profileKey: null,
     points: defaultUserInfo.points,
     isAuthenticated: false,
+    hasCompletedProfileSetup: false,
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const getProfileSource = (profileUri: string | null): ImageSourcePropType =>
-    profileUri ? { uri: profileUri } : images.avatar;
+const getProfileSource = (profileUri: string | null, profileKey: string | null): ImageSourcePropType =>
+    profileUri ? { uri: profileUri } : getProfileCharacterSource(profileKey);
 
 const toStoredUser = (userInfo: UserInfoType, isAuthenticated: boolean): StoredUserInfo => ({
     id: userInfo.id,
@@ -37,13 +40,18 @@ const toStoredUser = (userInfo: UserInfoType, isAuthenticated: boolean): StoredU
         typeof userInfo.profile === 'object' && userInfo.profile !== null && 'uri' in userInfo.profile
             ? userInfo.profile.uri ?? null
             : null,
+    profileKey: userInfo.profileKey ?? null,
     points: userInfo.points,
     isAuthenticated,
+    hasCompletedProfileSetup:
+        userInfo.profileKey != null ||
+        (typeof userInfo.profile === 'object' && userInfo.profile !== null && 'uri' in userInfo.profile),
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
     const [isHydrated, setIsHydrated] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [hasCompletedProfileSetup, setHasCompletedProfileSetup] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfoType>(defaultUserInfo);
 
     useEffect(() => {
@@ -56,10 +64,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setUserInfo({
                 id: storedUser.id ?? defaultUserInfo.id,
                 name: storedUser.name || defaultUserInfo.name,
-                profile: getProfileSource(storedUser.profileUri),
+                profile: getProfileSource(storedUser.profileUri, storedUser.profileKey ?? null),
+                profileKey: storedUser.profileKey ?? null,
                 points: storedUser.points ?? storedUser.point ?? defaultUserInfo.points,
             });
             setIsAuthenticated(storedUser.isAuthenticated);
+            setHasCompletedProfileSetup(storedUser.hasCompletedProfileSetup ?? Boolean(storedUser.profileUri || storedUser.profileKey));
             setIsHydrated(true);
         };
 
@@ -71,8 +81,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        writeJsonFile(USER_STORAGE_KEY, toStoredUser(userInfo, isAuthenticated));
-    }, [isAuthenticated, isHydrated, userInfo]);
+        writeJsonFile(USER_STORAGE_KEY, {
+            ...toStoredUser(userInfo, isAuthenticated),
+            hasCompletedProfileSetup,
+        });
+    }, [hasCompletedProfileSetup, isAuthenticated, isHydrated, userInfo]);
 
     const updateUserInfo = (updates: Partial<UserInfoType>) => {
         setUserInfo((prev) => ({ ...prev, ...updates }));
@@ -84,6 +97,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
 
         setUserInfo((prev) => ({ ...prev, points: prev.points + points }));
+    };
+
+    const completeProfileSetup = (updates: Pick<UserInfoType, 'profile'> & Partial<Pick<UserInfoType, 'profileKey'>>) => {
+        setUserInfo((prev) => ({
+            ...prev,
+            profile: updates.profile,
+            profileKey: updates.profileKey ?? null,
+        }));
+        setHasCompletedProfileSetup(true);
     };
 
     const signIn = (user?: Partial<UserInfoType>) => {
@@ -103,10 +125,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const signOut = () => {
         setUserInfo(defaultUserInfo);
         setIsAuthenticated(false);
+        setHasCompletedProfileSetup(false);
     };
 
     return (
-        <UserContext.Provider value={{ isAuthenticated, isHydrated, userInfo, updateUserInfo, addPoints, signIn, signUp, signOut }}>
+        <UserContext.Provider value={{ isAuthenticated, isHydrated, hasCompletedProfileSetup, userInfo, updateUserInfo, addPoints, completeProfileSetup, signIn, signUp, signOut }}>
             {children}
         </UserContext.Provider>
     );

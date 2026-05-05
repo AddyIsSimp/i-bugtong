@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Signin() {
-  const { signIn } = useUser();
+  const { signIn, hasCompletedProfileSetup } = useUser();
   const { syncGameAssetsFromLogin } = useGame();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -48,7 +48,7 @@ export default function Signin() {
         life: result.data.life,
         hint: result.data.hint,
       });
-      router.replace("/(tabs)/play");
+      router.replace(hasCompletedProfileSetup ? "/(tabs)/play" : "/(auth)/avatar-setup");
     } catch (error) {
       Alert.alert("Login failed", error instanceof Error ? error.message : "Something went wrong during login.");
     } finally {

@@ -51,6 +51,10 @@ function LayoutContent() {
               name="forgot"
               options={{ title: "Forgot", headerShown: false }}
             />
+            <Stack.Screen
+              name="avatar-setup"
+              options={{ title: "Avatar Setup", headerShown: false }}
+            />
           </Stack>
         </View>
       </View>
