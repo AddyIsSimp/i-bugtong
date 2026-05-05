@@ -11,44 +11,46 @@ interface TimerProps {
 export default function Timer({ initialSeconds, onTimeUp, isRunning }: TimerProps) {
     const [seconds, setSeconds] = useState(initialSeconds);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const hasTriggeredTimeUpRef = useRef(false);
+    const onTimeUpRef = useRef(onTimeUp);
+
+    useEffect(() => {
+        onTimeUpRef.current = onTimeUp;
+    }, [onTimeUp]);
 
     useEffect(() => {
         setSeconds(initialSeconds);
+        hasTriggeredTimeUpRef.current = false;
     }, [initialSeconds]);
 
     useEffect(() => {
-        // Clear any existing interval
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
 
-        // Start new interval if conditions are met
         if (isRunning && seconds > 0) {
             intervalRef.current = setInterval(() => {
-                setSeconds((prev) => {
-                    if (prev <= 1) {
-                        // Time's up
-                        if (intervalRef.current) {
-                            clearInterval(intervalRef.current);
-                            intervalRef.current = null;
-                        }
-                        onTimeUp();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
+                setSeconds((prev) => Math.max(prev - 1, 0));
             }, 1000);
         }
 
-        // Cleanup on unmount or when dependencies change
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
         };
-    }, [isRunning, seconds, onTimeUp]);
+    }, [isRunning, seconds]);
+
+    useEffect(() => {
+        if (seconds !== 0 || hasTriggeredTimeUpRef.current) {
+            return;
+        }
+
+        hasTriggeredTimeUpRef.current = true;
+        onTimeUpRef.current();
+    }, [seconds]);
 
     // Format seconds to MM:SS
     const formatTime = (totalSeconds: number): string => {
@@ -72,7 +74,7 @@ export default function Timer({ initialSeconds, onTimeUp, isRunning }: TimerProp
         return (
             <View className="items-end bg-red-500/70 px-4 py-1 rounded-full">
                 <Text className="font-bold text-lg text-white">
-                    Time's Up!
+                    Time&apos;s Up!
                 </Text>
             </View>
         );

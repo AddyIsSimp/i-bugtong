@@ -108,7 +108,6 @@ export default function GamePage() {
         setTimeExpired(true);
         setIsGameActive(false);
 
-        // Show alert with options
         Alert.alert(
             "Time's Up!",
             "You ran out of time. Would you like to retry or go back to menu?",
@@ -415,6 +414,7 @@ export default function GamePage() {
                 expectedAnswer,
                 timeSpent,
                 userId: userInfo.id,
+                currentTotalPoints: userInfo.points,
                 confidenceScore,
                 remainingSeconds: calculatedPoints.remainingSeconds,
                 points: {

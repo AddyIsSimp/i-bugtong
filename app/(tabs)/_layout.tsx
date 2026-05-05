@@ -1,13 +1,15 @@
 import { tabs } from '@/constants/data';
 import { colors, components } from '@/constants/theme';
+import { checkApiHealth } from '@/services/api';
 import { FontAwesome } from '@expo/vector-icons';
 import NetInfo from "@react-native-community/netinfo";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs } from "expo-router";
 import { useEffect, useState } from 'react';
-import { Alert, Animated, BackHandler, Platform, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, AppState, BackHandler, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const tabBar = components.tabBar;
+const API_HEALTH_CHECK_INTERVAL = 15000;
 
 interface TabIconProps {
     focused: boolean;
@@ -15,29 +17,67 @@ interface TabIconProps {
 }
 
 const TabLayout = () => {
-    const router = useRouter();
-
     //Online detection
     const [isOnline, setIsOnline] = useState(true);
+    const [isApiReachable, setIsApiReachable] = useState(true);
     const [bannerAnimation] = useState(new Animated.Value(0));
+    const insets = useSafeAreaInsets();
+
+    const bannerMessage = !isOnline
+        ? 'You are offline. Please check your internet connection.'
+        : !isApiReachable
+            ? 'Server is not running or not responding right now.'
+            : null;
+    const bannerBackgroundColor = !isOnline ? 'rgba(239, 68, 68, 0.92)' : 'rgba(245, 158, 11, 0.95)';
+
+    useEffect(() => {
+        Animated.timing(bannerAnimation, {
+            toValue: bannerMessage ? 1 : 0,
+            duration: 300,
+            useNativeDriver: true,
+        }).start();
+    }, [bannerAnimation, bannerMessage]);
 
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
             const connected = !!state.isConnected;
             setIsOnline(connected);
-
-            // Animate banner when connection changes
-            Animated.timing(bannerAnimation, {
-                toValue: connected ? 0 : 1,
-                duration: 300,
-                useNativeDriver: true,
-            }).start();
         });
         return () => unsubscribe();
     }, []);
 
-    //Insets
-    const insets = useSafeAreaInsets();
+    // useEffect(() => {
+    //     let isMounted = true;
+
+    //     const runHealthCheck = async () => {
+    //         if (!isOnline) {
+    //             if (isMounted) {
+    //                 setIsApiReachable(true);
+    //             }
+    //             return;
+    //         }
+
+    //         const isHealthy = await checkApiHealth();
+    //         if (isMounted) {
+    //             setIsApiReachable(isHealthy);
+    //         }
+    //     };
+
+    //     runHealthCheck();
+
+    //     const intervalId = setInterval(runHealthCheck, API_HEALTH_CHECK_INTERVAL);
+    //     const appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
+    //         if (nextAppState === 'active') {
+    //             runHealthCheck();
+    //         }
+    //     });
+
+    //     return () => {
+    //         isMounted = false;
+    //         clearInterval(intervalId);
+    //         appStateSubscription.remove();
+    //     };
+    // }, [isOnline]);
 
     // Handle back button press on Android
     useEffect(() => {
@@ -158,11 +198,19 @@ const TabLayout = () => {
                     />
                 ))}
             </Tabs>
-            {/* Animated offline banner */}
-            {!isOnline && (
+            {/* Connectivity / server status banner */}
+            {bannerMessage && (
                 <Animated.View
-                    className="bg-red-500/50 p-2"
                     style={{
+                        position: 'absolute',
+                        top: insets.top + 8,
+                        left: 12,
+                        right: 12,
+                        zIndex: 20,
+                        borderRadius: 12,
+                        paddingHorizontal: 12,
+                        paddingVertical: 10,
+                        backgroundColor: bannerBackgroundColor,
                         opacity: bannerAnimation,
                         transform: [{
                             translateY: bannerAnimation.interpolate({
@@ -172,9 +220,7 @@ const TabLayout = () => {
                         }]
                     }}
                 >
-                    <Text className="text-white text-center">
-                        You are offline. Please check your connection.
-                    </Text>
+                    <Text className="text-white text-center">{bannerMessage}</Text>
                 </Animated.View>
             )}
         </>

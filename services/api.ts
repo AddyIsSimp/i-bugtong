@@ -1,11 +1,12 @@
 // services/api.ts
 import axios from 'axios';
 
-const BASE_URL = 'http://192.168.105.225:8000';
+const BASE_URL = 'http://10.191.4.95:8000';
+const HEALTH_CHECK_PATHS = ['/health', '/api/health', '/'];
 
 const api = axios.create({
     baseURL: BASE_URL,
-    timeout: 30000,
+    timeout: 10000,
 });
 
 export interface SubmitAnswerResponse {
@@ -32,6 +33,7 @@ export interface SubmitAnswerRequest {
     expectedAnswer: string;
     timeSpent: number;
     userId: string | number;
+    currentTotalPoints: number;
     confidenceScore: number;
     remainingSeconds: number;
     points: {
@@ -50,6 +52,7 @@ export const submitAnswer = async (
         expectedAnswer,
         timeSpent,
         userId,
+        currentTotalPoints,
         confidenceScore,
         remainingSeconds,
         points,
@@ -70,6 +73,7 @@ export const submitAnswer = async (
         formData.append('expected_answer', expectedAnswer);
         formData.append('time_spent', timeSpent.toString());
         formData.append('user_id', userId.toString());
+        formData.append('current_total_points', currentTotalPoints.toString());
         formData.append('confidence_score', confidenceScore.toString());
         formData.append('remaining_seconds', remainingSeconds.toString());
         formData.append('difficulty_multiplier', difficultyMultiplier.toString());
@@ -95,13 +99,26 @@ export const submitAnswer = async (
 };
 
 export const checkApiHealth = async (): Promise<boolean> => {
-    try {
-        const response = await api.get('/health');
-        return response.status === 200;
-    } catch (error) {
-        console.error('API health check failed:', error);
-        return false;
+    for (const path of HEALTH_CHECK_PATHS) {
+        try {
+            const response = await api.get(path, {
+                timeout: 5000,
+                validateStatus: () => true,
+            });
+
+            // Any HTTP response means the server is running and reachable,
+            // even if the endpoint itself returns 404.
+            if (response.status >= 100 && response.status < 500) {
+                return true;
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                return true;
+            }
+        }
     }
+
+    return false;
 };
 
 

@@ -54,7 +54,7 @@ export const gameBG = [
 ]
 
 export const initialLevels: LevelConfig[] = [
-    { name: "Easy", difficulty: 1, background: images.stacked_peaks_horizontal, time: 10, hints: 3, freeHint: 1, locked: false },
+    { name: "Easy", difficulty: 1, background: images.stacked_peaks_horizontal, time: 150, hints: 3, freeHint: 1, locked: false },
     { name: "Medium", difficulty: 2, background: images.stacked_waves_horizontal, time: 120, hints: 2, freeHint: 0, locked: true },
     { name: "Hard", difficulty: 3, background: images.layered_peaks_horizontal, time: 100, hints: 1, freeHint: 0, locked: true },
 ];
