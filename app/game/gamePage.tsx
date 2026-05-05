@@ -13,6 +13,7 @@ import { custom_icons } from "@/constants/custom_icons";
 import { initialLevels } from "@/constants/data";
 import { useGame } from '@/contexts/GameContext';
 import { useUser } from "@/contexts/UserContext";
+import { submitAnswer } from "@/services/api";
 import { getNextUnsolvedBugtong } from "@/utils";
 
 export default function GamePage() {
@@ -22,14 +23,14 @@ export default function GamePage() {
 
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const { bugtongs, gameAssets, levels, isGameActive, setBugtongs, setIsGameActive, addDiamonds, consumeHint, consumeLife } = useGame();
-    const { addPoints } = useUser();
+    const { userInfo, addPoints } = useUser();
     const [timeExpired, setTimeExpired] = useState(false);
     const [timerKey, setTimerKey] = useState(0);
     const params = useLocalSearchParams();
 
     // Hints state for current bugtong
     const [currentBugtong, setCurrentBugtong] = useState<BugtongProps | null>(null);
-    const isSubmitting = false;
+    const [isSubmitting, setIsSubmitting] = useState(false);
     //HELPER FUNCTIONS
     const getDifficultyString = (difficulty: number | string): string => {
         const diff = Number(difficulty);
@@ -377,8 +378,7 @@ export default function GamePage() {
         return { points, diamonds };
     };
 
-    //FOR TESTING
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!capturedImage) {
             Alert.alert("No Image", "Please capture an image first.");
             return;
@@ -391,90 +391,64 @@ export default function GamePage() {
             Alert.alert("Time's Up!", "You ran out of time!");
             return;
         }
-
-        setIsGameActive(false);
+        if (userInfo.id == null) {
+            Alert.alert("Missing User", "Please log in again before submitting an answer.");
+            return;
+        }
 
         const timeSpent = (Date.now() - startTimeRef.current) / 1000;
-        const isCorrect = true;
         const confidenceScore = 100;
+        const calculatedPoints = calculatePoints(true, timeSpent, confidenceScore);
 
-        const rewards = applyAnswerOutcome(isCorrect, timeSpent, confidenceScore);
+        setIsSubmitting(true);
 
-        setAnswerResult({
-            isCorrect,
-            timeSpent,
-            confidenceScore,
-            pointsEarned: rewards.points.totalPoints,
-            diamondsEarned: rewards.diamonds.totalDiamonds,
-            remainingSeconds: rewards.points.remainingSeconds,
-        });
-        setResultModalVisible(true);
-    }
+        try {
+            const imageUri = capturedImage;
+            const expectedAnswer = currentBugtong?.answer || '';
+            const bugtongId = typeof currentBugtong?.id === 'string'
+                ? parseInt(currentBugtong.id, 10)
+                : (currentBugtong?.id || 0);
 
-    //REAL HANDLE SUBMIT
-    // const handleSubmit = async () => {
-    //     if (!capturedImage) {
-    //         Alert.alert("No Image", "Please capture an image first.");
-    //         return;
-    //     }
-    //     if (!isGameActive) {
-    //         Alert.alert("Game Not Started", "Please start the game first.");
-    //         return;
-    //     }
-    //     if (timeExpired) {
-    //         Alert.alert("Time's Up!", "You ran out of time!");
-    //         return;
-    //     }
+            const result = await submitAnswer({
+                imageUri,
+                bugtongId,
+                expectedAnswer,
+                timeSpent,
+                userId: userInfo.id,
+                confidenceScore,
+                remainingSeconds: calculatedPoints.remainingSeconds,
+                points: {
+                    basePoints: calculatedPoints.basePoints,
+                    timePoints: calculatedPoints.timePoints,
+                    confidencePoints: calculatedPoints.confidencePoints,
+                    totalPoints: calculatedPoints.totalPoints,
+                },
+                difficultyMultiplier: difficultyMultiplierMap[difficultyString as Difficulty] ?? 1,
+            });
 
-    //     const timeSpent = (Date.now() - startTimeRef.current) / 1000;
+            const rewards = applyAnswerOutcome(result.is_correct, timeSpent, result.confidence ?? confidenceScore);
 
-    //     setIsSubmitting(true);
-    //     setApiError(null);
-
-    //     try {
-    //         // Use the original image URI directly (no copying needed)
-    //         const imageUri = capturedImage;
-
-    //         // Get expected answer from current bugtong
-    //         const expectedAnswer = currentBugtong?.answer || '';
-
-    //         // Ensure bugtongId is a number
-    //         const bugtongId = typeof currentBugtong?.id === 'string'
-    //             ? parseInt(currentBugtong.id)
-    //             : (currentBugtong?.id || 0);
-
-    //         // Submit to API
-    //         const result = await submitAnswer(
-    //             imageUri,
-    //             bugtongId,
-    //             expectedAnswer,
-    //             timeSpent
-    //         );
-
-    //         console.log('API Response:', result);
-
-    //         applyAnswerOutcome(result.is_correct, timeSpent);
-    //         // Show result modal with API response
-    //         setAnswerResult({
-    //             isCorrect: result.is_correct,
-    //             timeSpent: timeSpent
-    //         });
-    //         setResultModalVisible(true);
-    //         setIsGameActive(false);
-
-    //     } catch (error) {
-    //         console.error('Submission error:', error);
-    //         const errorMessage = error instanceof Error ? error.message : 'Failed to submit answer';
-    //         setApiError(errorMessage);
-    //         Alert.alert(
-    //             "Submission Failed",
-    //             errorMessage + "\n\nPlease check your connection to the API server.",
-    //             [{ text: "OK", onPress: () => console.log("Error acknowledged") }]
-    //         );
-    //     } finally {
-    //         setIsSubmitting(false);
-    //     }
-    // };
+            setAnswerResult({
+                isCorrect: result.is_correct,
+                timeSpent,
+                confidenceScore: result.confidence ?? confidenceScore,
+                pointsEarned: rewards.points.totalPoints,
+                diamondsEarned: rewards.diamonds.totalDiamonds,
+                remainingSeconds: rewards.points.remainingSeconds,
+            });
+            setResultModalVisible(true);
+            setIsGameActive(false);
+        } catch (error) {
+            console.error('Submission error:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to submit answer';
+            Alert.alert(
+                "Submission Failed",
+                errorMessage + "\n\nPlease check your connection to the API server.",
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     // Get current hint count
     const currentHintCount = gameAssets.find(asset => asset.name === 'hint')?.quantity || 0;

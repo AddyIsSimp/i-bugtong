@@ -18,6 +18,7 @@ interface UserContextType {
 const USER_STORAGE_KEY = 'user';
 
 const defaultStoredUser: StoredUserInfo = {
+    id: defaultUserInfo.id,
     name: defaultUserInfo.name,
     profileUri: null,
     points: defaultUserInfo.points,
@@ -30,6 +31,7 @@ const getProfileSource = (profileUri: string | null): ImageSourcePropType =>
     profileUri ? { uri: profileUri } : images.avatar;
 
 const toStoredUser = (userInfo: UserInfoType, isAuthenticated: boolean): StoredUserInfo => ({
+    id: userInfo.id,
     name: userInfo.name,
     profileUri:
         typeof userInfo.profile === 'object' && userInfo.profile !== null && 'uri' in userInfo.profile
@@ -52,6 +54,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             );
 
             setUserInfo({
+                id: storedUser.id ?? defaultUserInfo.id,
                 name: storedUser.name || defaultUserInfo.name,
                 profile: getProfileSource(storedUser.profileUri),
                 points: storedUser.points ?? storedUser.point ?? defaultUserInfo.points,

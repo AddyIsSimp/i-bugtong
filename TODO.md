@@ -1,0 +1,1 @@
+1. Sync the submit-answer to update the points in the database

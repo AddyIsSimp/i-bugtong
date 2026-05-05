@@ -4,12 +4,14 @@ import { custom_icons } from "./custom_icons";
 import { icons } from "./icons";
 
 export interface UserInfoType {
+    id: number | null;
     name: string;
     profile: ImageSourcePropType; // Can be number (local) or { uri: string }
     points: number;
 }
 
 export interface StoredUserInfo {
+    id: number | null;
     name: string;
     profileUri: string | null;
     points: number;
@@ -33,6 +35,7 @@ export interface GameAssetConfig {
 }
 
 export const defaultUserInfo: UserInfoType = {
+    id: null,
     name: "John Doe",
     profile: images.avatar,
     points: 0,

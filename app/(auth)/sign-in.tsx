@@ -38,7 +38,11 @@ export default function Signin() {
         return;
       }
 
-      signIn({ name: result.data.username, points: result.data.points });
+      signIn({
+        id: result.data.id,
+        name: result.data.username,
+        points: result.data.points,
+      });
       syncGameAssetsFromLogin({
         diamond: result.data.diamond,
         life: result.data.life,

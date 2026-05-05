@@ -7,6 +7,7 @@ import stacked_peaks_horizontal from '@/assets/gameBG/stacked-peaks-haikei_HORIZ
 import stacked_waves_horizontal from '@/assets/gameBG/stacked-waves-haikei_HORIZONTAL.png';
 import blob_scene_haikei from '@/assets/gameBG/blob-scene-haikei.png';
 import app_icon from '@/assets/icons/appIcon.png';
+import app_bg from '@/assets/gameBG/bg.png'
 
 import bugtong1 from '@/assets/bugtongImage/1_1.jpg';
 import bugtong2 from '@/assets/bugtongImage/2_1.jpg';
@@ -34,6 +35,7 @@ export default {
     stacked_peaks_horizontal,
     stacked_waves_horizontal,
     blob_scene_haikei,
+    app_bg,
 
     bugtong1,
     bugtong2,

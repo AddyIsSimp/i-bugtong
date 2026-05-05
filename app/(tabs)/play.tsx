@@ -90,7 +90,7 @@ export default function Play() {
 
                     {/* Avatar Section */}
                     <View className="flex-row justify-between px-4 mb-4">
-                        <TouchableOpacity onPress={() => setProfileVisible(true)} className="flex-1">
+                        <TouchableOpacity onPress={() => setProfileVisible(true)} className="flex-1" activeOpacity={0.9}>
                             <View className="flex-row items-center">
                                 <Avatar size='lg' />
                                 <View className="flex-col ml-[-13px]">

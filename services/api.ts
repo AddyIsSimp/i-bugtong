@@ -1,7 +1,7 @@
 // services/api.ts
 import axios from 'axios';
 
-const BASE_URL = 'http://10.96.86.95:8000';
+const BASE_URL = 'http://192.168.105.225:8000';
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -12,7 +12,8 @@ export interface SubmitAnswerResponse {
     is_correct: boolean;
     confidence: number;
     message: string;
-    image_url?: string;  // Add this to capture the returned image URL
+    image_url?: string;
+    user_id: string | number;
 }
 
 export interface LoginResponseData {
@@ -25,11 +26,35 @@ export interface LoginResponseData {
     hint: number;
 }
 
+export interface SubmitAnswerRequest {
+    imageUri: string;
+    bugtongId: number;
+    expectedAnswer: string;
+    timeSpent: number;
+    userId: string | number;
+    confidenceScore: number;
+    remainingSeconds: number;
+    points: {
+        basePoints: number;
+        timePoints: number;
+        confidencePoints: number;
+        totalPoints: number;
+    };
+    difficultyMultiplier: number;
+}
+
 export const submitAnswer = async (
-    imageUri: string,
-    bugtongId: number,
-    expectedAnswer: string,
-    timeSpent: number
+    {
+        imageUri,
+        bugtongId,
+        expectedAnswer,
+        timeSpent,
+        userId,
+        confidenceScore,
+        remainingSeconds,
+        points,
+        difficultyMultiplier,
+    }: SubmitAnswerRequest,
 ): Promise<SubmitAnswerResponse> => {
     try {
         const formData = new FormData();
@@ -44,6 +69,14 @@ export const submitAnswer = async (
         formData.append('bugtong_id', bugtongId.toString());
         formData.append('expected_answer', expectedAnswer);
         formData.append('time_spent', timeSpent.toString());
+        formData.append('user_id', userId.toString());
+        formData.append('confidence_score', confidenceScore.toString());
+        formData.append('remaining_seconds', remainingSeconds.toString());
+        formData.append('difficulty_multiplier', difficultyMultiplier.toString());
+        formData.append('base_points', points.basePoints.toString());
+        formData.append('time_points', points.timePoints.toString());
+        formData.append('confidence_points', points.confidencePoints.toString());
+        formData.append('points_earned', points.totalPoints.toString());
 
         const response = await api.post('/api/submit-answer', formData, {
             headers: {

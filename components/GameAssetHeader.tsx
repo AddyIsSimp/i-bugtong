@@ -1,5 +1,6 @@
 import { HINT_DIAMOND_COST, LIFE_DIAMOND_COST } from "@/constants/data";
 import { useGame } from "@/contexts/GameContext";
+import { MaterialIcons } from "@expo/vector-icons";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 
 type HeaderVariant = "full" | "pill";
@@ -63,12 +64,17 @@ export default function GameAssetHeader({ variant = "full" }: GameAssetHeaderPro
                 return (
                     <View className="items-center justify-start" key={asset.name}>
                         <TouchableOpacity
-                            className="flex-row items-center justify-center gap-1 py-1 bg-accent/20 border-2 border-accent/30 rounded-full"
+                            className="relative flex-row items-center justify-center gap-1 py-1 bg-accent/20 border-2 border-accent/30 rounded-full"
                             disabled={!canPress}
                             onPress={() => handleAssetPress(asset.name)}
                         >
                             <Image source={asset.icon} className="w-5 h-5 -ml-2" style={{ width: 20, height: 20 }} />
-                            <Text className="text-md text-primary px-3 pr-6">{asset.quantity}</Text>
+                            <Text className="text-md text-primary px-2 pr-6">{asset.quantity}</Text>
+                            {canPress && (
+                                <View className="absolute -right-2 top-[1/2] bg-accent rounded-full w-5 h-5 items-center justify-center">
+                                    <MaterialIcons name="add" size={14} color="white" />
+                                </View>
+                            )}
                         </TouchableOpacity>
                         {showCountdown && (
                             <Text className="mt-1 text-[10px] text-primary/70">
