@@ -1,7 +1,7 @@
 import Avatar from "@/components/Avatar";
 import { profileCharacterChoices } from "@/constants/data";
 import { useUser } from "@/contexts/UserContext";
-import { uploadProfileAvatar } from "@/services/api";
+import { toAbsoluteApiUrl, updateProfile } from "@/services/api";
 import { Asset } from "expo-asset";
 import * as ImagePicker from "expo-image-picker";
 import { Redirect, router } from "expo-router";
@@ -78,14 +78,12 @@ export default function AvatarSetup() {
         try {
             setIsSubmitting(true);
 
-            const response = await uploadProfileAvatar({
+            const response = await updateProfile({
                 userId: userInfo.id,
-                imageUri,
-                characterKey: uploadedImageUri ? undefined : selectedCharacter?.key,
+                profileUri: imageUri,
             });
 
-            const remoteProfileUri = response.avatar_url || response.profile_url || response.image_url;
-            const usedLocalFallback = !remoteProfileUri && response.message?.includes('endpoint is not available');
+            const remoteProfileUri = toAbsoluteApiUrl(response.profile_path);
 
             completeProfileSetup({
                 profile: remoteProfileUri
@@ -95,13 +93,6 @@ export default function AvatarSetup() {
                         : (selectedCharacter?.source ?? userInfo.profile),
                 profileKey: remoteProfileUri || uploadedImageUri ? null : selectedCharacter?.key ?? null,
             });
-
-            if (usedLocalFallback) {
-                Alert.alert(
-                    "Avatar Saved Locally",
-                    "Your server does not support avatar upload yet, so the selected avatar was saved only on this device."
-                );
-            }
 
             router.replace('/(tabs)/play');
         } catch (error) {

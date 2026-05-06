@@ -35,6 +35,7 @@ declare global {
         username: string;
         email: string;
         points: number;
+        profile_path: string | null;
         diamond: number;
         life: number;
         hint: number;

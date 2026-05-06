@@ -1,15 +1,16 @@
 import PasswordInput from "@/components/PasswordInput";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
 import TermsModal from "@/components/TermsModal";
+import { defaultUserInfo } from "@/constants/data";
 import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
-import { login } from "@/services/api";
+import { login, toAbsoluteApiUrl } from "@/services/api";
 import { router } from "expo-router";
 import { useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Signin() {
-  const { signIn, hasCompletedProfileSetup } = useUser();
+  const { signIn } = useUser();
   const { syncGameAssetsFromLogin } = useGame();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -38,17 +39,24 @@ export default function Signin() {
         return;
       }
 
+      const profileUri = toAbsoluteApiUrl(result.data.profile_path);
+      const hasServerProfile = Boolean(profileUri);
+
       signIn({
         id: result.data.id,
         name: result.data.username,
+        profile: profileUri ? { uri: profileUri } : defaultUserInfo.profile,
+        profileKey: null,
         points: result.data.points,
+      }, {
+        hasCompletedProfileSetup: hasServerProfile,
       });
       syncGameAssetsFromLogin({
         diamond: result.data.diamond,
         life: result.data.life,
         hint: result.data.hint,
       });
-      router.replace(hasCompletedProfileSetup ? "/(tabs)/play" : "/(auth)/avatar-setup");
+      router.replace(hasServerProfile ? "/(tabs)/play" : "/(auth)/avatar-setup");
     } catch (error) {
       Alert.alert("Login failed", error instanceof Error ? error.message : "Something went wrong during login.");
     } finally {

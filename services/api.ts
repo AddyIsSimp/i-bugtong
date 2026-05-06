@@ -1,5 +1,5 @@
 // services/api.ts
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 
 const BASE_URL = 'http://10.191.4.95:8000';
 const HEALTH_CHECK_PATHS = ['/health', '/api/health', '/'];
@@ -17,19 +17,12 @@ export interface SubmitAnswerResponse {
     user_id: string | number;
 }
 
-export interface UploadProfileAvatarResponse {
-    message?: string;
-    avatar_url?: string;
-    image_url?: string;
-    profile_url?: string;
-    user_id?: string | number;
-}
-
 export interface LoginResponseData {
     id: number;
     username: string;
     email: string;
     points: number;
+    profile_path: string | null;
     diamond: number;
     life: number;
     hint: number;
@@ -53,11 +46,31 @@ export interface SubmitAnswerRequest {
     difficultyMultiplier: number;
 }
 
-export interface UploadProfileAvatarRequest {
-    userId: string | number;
-    imageUri: string;
-    characterKey?: string;
+export interface UpdateProfileRequest {
+    userId: number;
+    username?: string;
+    profileUri?: string;
 }
+
+export interface UpdateProfileResponse {
+    id: number;
+    username: string;
+    email?: string;
+    points?: number;
+    profile_path: string | null;
+}
+
+export const toAbsoluteApiUrl = (path: string | null | undefined): string | null => {
+    if (!path) {
+        return null;
+    }
+
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        return path;
+    }
+
+    return `${BASE_URL}${path}`;
+};
 
 export const submitAnswer = async (
     {
@@ -105,7 +118,7 @@ export const submitAnswer = async (
         return response.data;
     } catch (error) {
         console.error('Error submitting answer:', error);
-        if (axios.isAxiosError(error)) {
+        if (isAxiosError(error)) {
             throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to submit answer');
         }
         throw new Error('Network error occurred');
@@ -126,7 +139,7 @@ export const checkApiHealth = async (): Promise<boolean> => {
                 return true;
             }
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response) {
+            if (isAxiosError(error) && error.response) {
                 return true;
             }
         }
@@ -135,27 +148,30 @@ export const checkApiHealth = async (): Promise<boolean> => {
     return false;
 };
 
-export const uploadProfileAvatar = async (
-    { userId, imageUri, characterKey }: UploadProfileAvatarRequest,
-): Promise<UploadProfileAvatarResponse> => {
+export const updateProfile = async (
+    { userId, username, profileUri }: UpdateProfileRequest,
+): Promise<UpdateProfileResponse> => {
     const formData = new FormData();
-    const filename = imageUri.split('/').pop() || `avatar-${Date.now()}.jpg`;
-    const extension = filename.split('.').pop()?.toLowerCase();
-    const imageType = extension === 'png' ? 'image/png' : 'image/jpeg';
-
-    formData.append('image', {
-        uri: imageUri,
-        name: filename,
-        type: imageType,
-    } as any);
     formData.append('user_id', userId.toString());
 
-    if (characterKey) {
-        formData.append('character_key', characterKey);
+    if (typeof username === 'string' && username.trim()) {
+        formData.append('username', username.trim());
+    }
+
+    if (profileUri) {
+        const filename = profileUri.split('/').pop() || `profile-${Date.now()}.jpg`;
+        const extension = filename.split('.').pop()?.toLowerCase();
+        const imageType = extension === 'png' ? 'image/png' : 'image/jpeg';
+
+        formData.append('profile', {
+            uri: profileUri,
+            name: filename,
+            type: imageType,
+        } as any);
     }
 
     try {
-        const response = await api.post('/api/profile-avatar', formData, {
+        const response = await api.post<UpdateProfileResponse>('/api/update-profile', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -163,15 +179,9 @@ export const uploadProfileAvatar = async (
 
         return response.data;
     } catch (error) {
-        console.error('Error uploading profile avatar:', error);
-        if (axios.isAxiosError(error)) {
-            if (error.response?.status === 404) {
-                // Fallback for servers that don't expose avatar upload yet.
-                return {
-                    message: 'Profile avatar endpoint is not available on the server yet.',
-                };
-            }
-            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to upload profile avatar');
+        console.error('Error updating profile:', error);
+        if (isAxiosError(error)) {
+            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to update profile');
         }
         throw new Error('Network error occurred');
     }
@@ -207,7 +217,7 @@ export const createAccount = async (
     } catch (error) {
         console.error('Error creating account:', error);
 
-        if (axios.isAxiosError(error)) {
+        if (isAxiosError(error)) {
             //Handle duplicate account (409 conflict)
             if (error.response?.status === 409) {
                 return {
@@ -264,7 +274,7 @@ export const login = async (
     } catch (error) {
         console.error('Error logging in:', error);
 
-        if (axios.isAxiosError(error)) {
+        if (isAxiosError(error)) {
             return {
                 status: error.response?.status || 500,
                 error: error.response?.data?.detail || error.message || 'Failed to login',

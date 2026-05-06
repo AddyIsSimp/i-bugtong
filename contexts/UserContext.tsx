@@ -11,7 +11,7 @@ interface UserContextType {
     updateUserInfo: (updates: Partial<UserInfoType>) => void;
     addPoints: (points: number) => void;
     completeProfileSetup: (updates: Pick<UserInfoType, 'profile'> & Partial<Pick<UserInfoType, 'profileKey'>>) => void;
-    signIn: (user?: Partial<UserInfoType>) => void;
+    signIn: (user?: Partial<UserInfoType>, options?: { hasCompletedProfileSetup?: boolean }) => void;
     signUp: (username?: string) => void;
     signOut: () => void;
 }
@@ -108,9 +108,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setHasCompletedProfileSetup(true);
     };
 
-    const signIn = (user?: Partial<UserInfoType>) => {
+    const signIn = (user?: Partial<UserInfoType>, options?: { hasCompletedProfileSetup?: boolean }) => {
         if (user) {
             setUserInfo((prev) => ({ ...prev, ...user }));
+        }
+        if (typeof options?.hasCompletedProfileSetup === 'boolean') {
+            setHasCompletedProfileSetup(options.hasCompletedProfileSetup);
         }
         setIsAuthenticated(true);
     };

@@ -1,10 +1,12 @@
 // components/ProfileModal.tsx
 import Avatar from "@/components/Avatar";
 import { useUser } from "@/contexts/UserContext";
+import { toAbsoluteApiUrl, updateProfile } from "@/services/api";
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import {
     Alert,
+    ActivityIndicator,
     ImageSourcePropType,
     Modal,
     Text,
@@ -23,6 +25,7 @@ interface ProfileModalProps {
 export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
     const { userInfo, updateUserInfo } = useUser();
     const [isEditable, setIsEditable] = React.useState(false);
+    const [isSaving, setIsSaving] = React.useState(false);
     const [name, setName] = React.useState(userInfo.name);
     const [profileImage, setProfileImage] = React.useState<ImageSourcePropType>(userInfo.profile);
     const [captureModalVisible, setCaptureModalVisible] = React.useState(false);
@@ -42,13 +45,63 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
         }
     }, [visible, userInfo]);
 
-    const handleSave = () => {
-        updateUserInfo({
-            name: name,
-            profile: profileImage,
-        });
-        Alert.alert("Success", "Profile updated successfully!");
-        setIsEditable(false);
+    const getImageUri = (image: ImageSourcePropType) =>
+        typeof image === 'object' && image !== null && 'uri' in image ? image.uri ?? null : null;
+
+    const handleSave = async () => {
+        if (userInfo.id == null) {
+            Alert.alert("Missing User", "Please log in again before updating your profile.");
+            return;
+        }
+
+        const trimmedName = name.trim();
+        if (!trimmedName) {
+            Alert.alert("Missing Name", "Please enter a name before saving.");
+            return;
+        }
+
+        const originalImageUri = getImageUri(originalProfileImage);
+        const currentImageUri = getImageUri(profileImage);
+        const hasNameChanged = trimmedName !== originalName.trim();
+        const hasProfileChanged = currentImageUri !== originalImageUri;
+
+        if (!hasNameChanged && !hasProfileChanged) {
+            setIsEditable(false);
+            return;
+        }
+
+        try {
+            setIsSaving(true);
+
+            const response = await updateProfile({
+                userId: userInfo.id,
+                username: hasNameChanged ? trimmedName : undefined,
+                profileUri: hasProfileChanged ? currentImageUri ?? undefined : undefined,
+            });
+
+            const remoteProfileUri = toAbsoluteApiUrl(response.profile_path);
+            const nextProfile = remoteProfileUri
+                ? { uri: remoteProfileUri }
+                : profileImage;
+
+            updateUserInfo({
+                name: response.username || trimmedName,
+                profile: nextProfile,
+                profileKey: null,
+            });
+            setProfileImage(nextProfile);
+            setOriginalName(response.username || trimmedName);
+            setOriginalProfileImage(nextProfile);
+            setIsEditable(false);
+            Alert.alert("Success", "Profile updated successfully!");
+        } catch (error) {
+            Alert.alert(
+                "Update Failed",
+                error instanceof Error ? error.message : "Unable to update your profile right now."
+            );
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleEdit = () => {
@@ -73,13 +126,6 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
         const newProfileImage = { uri: imageUri };
         setProfileImage(newProfileImage);
         console.log("Image captured:", imageUri);
-
-        // If not in edit mode, update immediately
-        if (!isEditable) {
-            updateUserInfo({ profile: newProfileImage });
-            // Also update original values to match
-            setOriginalProfileImage(newProfileImage);
-        }
     };
 
     return (
@@ -141,13 +187,19 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
                                     <TouchableOpacity
                                         className="h-10 flex-row gap-1 items-center justify-center p-2 bg-accent rounded-full"
                                         onPress={handleEdit}
+                                        disabled={isSaving}
                                     >
-                                        <Text className="text-white">{isEditable ? "Save" : "Edit"}</Text>
+                                        {isSaving ? (
+                                            <ActivityIndicator size="small" color="white" />
+                                        ) : (
+                                            <Text className="text-white">{isEditable ? "Save" : "Edit"}</Text>
+                                        )}
                                     </TouchableOpacity>
                                     {isEditable && (
                                         <TouchableOpacity
                                             className="h-10 flex-row gap-1 items-center justify-center p-2 bg-gray-600 rounded-full"
                                             onPress={handleCancel}
+                                            disabled={isSaving}
                                         >
                                             <Text className="text-white">Cancel</Text>
                                         </TouchableOpacity>

@@ -1,6 +1,7 @@
 import { useGame } from "@/contexts/GameContext";
 import { addLineAfterCommas, getBugtongImage, getBugtongsByCategory } from "@/utils";
-import { FlatList, Image, Text, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Alert, FlatList, Image, Text, TouchableOpacity, View } from "react-native";
 
 interface CategorizeBugtongProps {
     category: string;
@@ -31,27 +32,43 @@ export default function CategorizeBugtong({ category }: CategorizeBugtongProps) 
 
     const renderItem = ({ item }: { item: any }) => {
         const imageSource = getBugtongImage(item.id);
+        const isSolved = item.solved;
+
         return (
-            <View className="bg-accent/30 px-4 py-3 rounded-xl">
+            <TouchableOpacity
+                activeOpacity={0.85}
+                className={`px-4 py-3 rounded-xl ${isSolved ? 'bg-accent/30' : 'bg-gray-300/70'}`}
+                onPress={() => {
+                    if (!isSolved) {
+                        Alert.alert("Locked", "You need to discover this bugtong");
+                    }
+                }}
+            >
                 <View className="flex-row items-center w-full gap-2">
-                    {imageSource && (
-                        <Image
-                            source={imageSource}
-                            className="w-32 h-32 rounded-lg mb-2"
-                            style={{ width: 128, height: 128 }}
-                            resizeMode="contain"
-                        />
-                    )}
+                    <View className="items-center justify-center">
+                        {isSolved && imageSource ? (
+                            <Image
+                                source={imageSource}
+                                className="w-32 h-32 rounded-lg mb-2"
+                                style={{ width: 128, height: 128 }}
+                                resizeMode="contain"
+                            />
+                        ) : (
+                            <View className="w-32 h-32 rounded-lg mb-2 bg-gray-400 items-center justify-center">
+                                <MaterialIcons name="lock" size={34} color="white" />
+                            </View>
+                        )}
+                    </View>
                     <View className="flex-col flex-1">
                         <Text className="text-center text-lg font-bold text-primary">
-                            {item.answer}
+                            {isSolved ? item.answer : "Locked"}
                         </Text>
                         <Text className="text-center text-md font-light whitespace-pre-line">
-                            {addLineAfterCommas(item.question)}
+                            {isSolved ? addLineAfterCommas(item.question) : ""}
                         </Text>
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     }
 
