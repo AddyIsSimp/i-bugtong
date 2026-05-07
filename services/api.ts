@@ -28,6 +28,40 @@ export interface LoginResponseData {
     hint: number;
 }
 
+export interface BugtongHintResponse {
+    text: string;
+    open: boolean;
+}
+
+export interface BugtongProgressItemResponse {
+    id: number;
+    difficulty: string;
+    category: string;
+    question: string;
+    bugtong_image: string | null;
+    answer: string;
+    hint: BugtongHintResponse[];
+    solved: boolean;
+}
+
+export interface SolvedBugtongProgressResponse {
+    user_id: number;
+    bugtong_id: number;
+}
+
+export interface UserHintProgressResponse {
+    user_id: number;
+    bugtong_id: number;
+    hint_index: number;
+    hint: string;
+}
+
+export interface BugtongProgressResponse {
+    bugtong: BugtongProgressItemResponse[];
+    solved_bugtong: SolvedBugtongProgressResponse[];
+    user_hint: UserHintProgressResponse[];
+}
+
 export interface SubmitAnswerRequest {
     imageUri: string;
     bugtongId: number;
@@ -228,6 +262,19 @@ export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
         console.error('Error fetching leaderboard:', error);
         if (isAxiosError(error)) {
             throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to fetch leaderboard');
+        }
+        throw new Error('Network error occurred');
+    }
+};
+
+export const fetchBugtongProgress = async (userId: number): Promise<BugtongProgressResponse> => {
+    try {
+        const response = await api.get<BugtongProgressResponse>(`/api/bugtong/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching bugtong progress:', error);
+        if (isAxiosError(error)) {
+            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to fetch bugtong progress');
         }
         throw new Error('Network error occurred');
     }

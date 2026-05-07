@@ -1,19 +1,20 @@
 import {
     LIFE_REFILL_INTERVAL_MS,
     MAX_LIFE,
-    cloneInitialBugtongList,
     cloneInitialGameAssets,
     cloneInitialLevels,
     GameAssetConfig,
     LevelConfig,
 } from '@/constants/data';
+import { BugtongProgressResponse, LoginResponseData, fetchBugtongProgress } from '@/services/api';
+import { useUser } from '@/contexts/UserContext';
 import { readJsonFile, writeJsonFile } from '@/utils/localStorage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 interface StoredGameData {
     levels: Pick<LevelConfig, 'difficulty' | 'locked'>[];
     gameAssets: Pick<GameAssetConfig, 'name' | 'quantity'>[];
-    bugtongs: Pick<BugtongProps, 'id' | 'solved' | 'hint'>[];
+    bugtongs: BugtongProps[];
     lifeRefillNextAt: number | null;
 }
 
@@ -30,6 +31,8 @@ interface GameContextType {
     setGameAssets: React.Dispatch<React.SetStateAction<GameAssetConfig[]>>;
     setBugtongs: React.Dispatch<React.SetStateAction<BugtongProps[]>>;
     syncGameAssetsFromLogin: (assets: Pick<LoginResponseData, 'diamond' | 'life' | 'hint'>) => void;
+    syncBugtongProgressFromLogin: (progress: BugtongProgressResponse) => void;
+    refreshBugtongs: () => Promise<boolean>;
     addDiamonds: (amount: number) => void;
     purchaseAsset: (assetName: 'hint' | 'life', cost: number) => { success: boolean; message?: string };
     consumeLife: (amount?: number) => void;
@@ -45,6 +48,14 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 const getAssetQuantity = (gameAssets: GameAssetConfig[], name: string) =>
     gameAssets.find((asset) => asset.name === name)?.quantity || 0;
 
+const normalizeDifficulty = (difficulty: string): Difficulty => {
+    if (difficulty === 'easy' || difficulty === 'medium' || difficulty === 'hard') {
+        return difficulty;
+    }
+
+    return 'easy';
+};
+
 const buildStoredGameData = (
     levels: LevelConfig[],
     gameAssets: GameAssetConfig[],
@@ -53,14 +64,16 @@ const buildStoredGameData = (
 ): StoredGameData => ({
     levels: levels.map(({ difficulty, locked }) => ({ difficulty, locked })),
     gameAssets: gameAssets.map(({ name, quantity }) => ({ name, quantity })),
-    bugtongs: bugtongs.map(({ id, solved, hint }) => ({ id, solved, hint: hint ?? [] })),
+    bugtongs: bugtongs.map((bugtong) => ({
+        ...bugtong,
+        hint: bugtong.hint?.map((hint) => ({ ...hint })) ?? [],
+    })),
     lifeRefillNextAt,
 });
 
 const mergeStoredGameData = (storedGame: StoredGameData) => {
     const baseLevels = cloneInitialLevels();
     const baseAssets = cloneInitialGameAssets();
-    const baseBugtongs = cloneInitialBugtongList();
 
     const levels = baseLevels.map((level) => {
         const storedLevel = storedGame.levels.find((item) => item.difficulty === level.difficulty);
@@ -72,16 +85,19 @@ const mergeStoredGameData = (storedGame: StoredGameData) => {
         return storedAsset ? { ...asset, quantity: storedAsset.quantity } : asset;
     });
 
-    const bugtongs = baseBugtongs.map((bugtong) => {
-        const storedBugtong = storedGame.bugtongs.find((item) => item.id === bugtong.id);
-        return storedBugtong
-            ? {
-                ...bugtong,
-                solved: storedBugtong.solved,
-                hint: storedBugtong.hint?.map((hint) => ({ ...hint })) ?? [],
-            }
-            : bugtong;
-    });
+    const bugtongs = (storedGame.bugtongs ?? [])
+        .filter(
+            (bugtong) =>
+                typeof bugtong?.question === 'string' &&
+                typeof bugtong?.category === 'string' &&
+                typeof bugtong?.answer === 'string'
+        )
+        .map((bugtong) => ({
+            ...bugtong,
+            difficulty: normalizeDifficulty(bugtong.difficulty),
+            bugtongImage: bugtong.bugtongImage ?? null,
+            hint: bugtong.hint?.map((hint) => ({ ...hint })) ?? [],
+        }));
 
     const currentLife = getAssetQuantity(gameAssets, 'life');
     const lifeRefillNextAt =
@@ -93,11 +109,12 @@ const mergeStoredGameData = (storedGame: StoredGameData) => {
 };
 
 export function GameProvider({ children }: { children: ReactNode }) {
+    const { isAuthenticated, isHydrated: isUserHydrated, userInfo } = useUser();
     const [isHydrated, setIsHydrated] = useState(false);
     const [isGameActive, setIsGameActive] = useState(false);
     const [levels, setLevels] = useState<LevelConfig[]>(cloneInitialLevels);
     const [gameAssets, setGameAssets] = useState<GameAssetConfig[]>(cloneInitialGameAssets);
-    const [bugtongs, setBugtongs] = useState<BugtongProps[]>(cloneInitialBugtongList);
+    const [bugtongs, setBugtongs] = useState<BugtongProps[]>([]);
     const [lifeRefillNextAt, setLifeRefillNextAt] = useState<number | null>(null);
     const [countdownNow, setCountdownNow] = useState(Date.now());
 
@@ -112,7 +129,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             const fallback = buildStoredGameData(
                 cloneInitialLevels(),
                 cloneInitialGameAssets(),
-                cloneInitialBugtongList(),
+                [],
                 null
             );
             const storedGame = await readJsonFile<StoredGameData>(GAME_STORAGE_KEY, fallback);
@@ -136,6 +153,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         writeJsonFile(GAME_STORAGE_KEY, buildStoredGameData(levels, gameAssets, bugtongs, lifeRefillNextAt));
     }, [bugtongs, gameAssets, isHydrated, levels, lifeRefillNextAt]);
+
+    useEffect(() => {
+        if (!isHydrated || !isUserHydrated || !isAuthenticated || userInfo.id == null) {
+            return;
+        }
+
+        let isCancelled = false;
+
+        const syncBugtongProgress = async () => {
+            try {
+                const progress = await fetchBugtongProgress(userInfo.id);
+
+                if (isCancelled) {
+                    return;
+                }
+
+                syncBugtongProgressFromLogin(progress);
+            } catch (error) {
+                console.error('Error syncing bugtong progress from server:', error);
+            }
+        };
+
+        syncBugtongProgress();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [isAuthenticated, isHydrated, isUserHydrated, userInfo.id]);
 
     useEffect(() => {
         if (!isHydrated) {
@@ -205,6 +250,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
         );
         setLifeRefillNextAt(life >= MAX_LIFE ? null : Date.now() + LIFE_REFILL_INTERVAL_MS);
         setCountdownNow(Date.now());
+    };
+
+    const syncBugtongProgressFromLogin = ({ bugtong }: BugtongProgressResponse) => {
+        setBugtongs(
+            bugtong.map((item) => ({
+                id: item.id,
+                difficulty: normalizeDifficulty(item.difficulty),
+                category: item.category,
+                question: item.question,
+                bugtongImage: item.bugtong_image,
+                answer: item.answer,
+                hint: item.hint.map((hint) => ({
+                    text: hint.text,
+                    open: hint.open,
+                })),
+                solved: item.solved,
+            }))
+        );
+    };
+
+    const refreshBugtongs = async () => {
+        if (userInfo.id == null) {
+            return false;
+        }
+
+        const progress = await fetchBugtongProgress(userInfo.id);
+        syncBugtongProgressFromLogin(progress);
+        return true;
     };
 
     const addDiamonds = (amount: number) => {
@@ -309,10 +382,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const resetStoredProgress = () => {
         setLevels(cloneInitialLevels());
         setGameAssets(cloneInitialGameAssets());
-        setBugtongs(cloneInitialBugtongList());
+        setBugtongs([]);
         setIsGameActive(false);
         setLifeRefillNextAt(null);
         setCountdownNow(Date.now());
+
+        if (userInfo.id != null) {
+            refreshBugtongs().catch((error) => {
+                console.error('Error reloading bugtongs after reset:', error);
+            });
+        }
     };
 
     return (
@@ -330,6 +409,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 setGameAssets,
                 setBugtongs,
                 syncGameAssetsFromLogin,
+                syncBugtongProgressFromLogin,
+                refreshBugtongs,
                 addDiamonds,
                 purchaseAsset,
                 consumeLife,

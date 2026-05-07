@@ -166,6 +166,7 @@ export const getCurrentBugtong = (bugtongs: BugtongProps[], difficultyString: st
         difficulty: difficultyString as Difficulty,
         category: 'Unknown',
         question: 'Question not found',
+        bugtongImage: null,
         answer: 'Unknown',
         hint: [],
         solved: false,

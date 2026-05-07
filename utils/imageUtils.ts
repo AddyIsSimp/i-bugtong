@@ -1,12 +1,15 @@
 // utils/imageUtils.ts
 
+import { toAbsoluteApiUrl } from '@/services/api';
+import { ImageSourcePropType } from 'react-native';
+
 /**
  * Get bugtong image source by ID
  * @param id - The bugtong ID
  * @returns Image source require statement or null if not found
  */
-export const getBugtongImageById = (id: number): any => {
-    const imageMap: Record<number, any> = {
+export const getBugtongImageById = (id: number): ImageSourcePropType | null => {
+    const imageMap: Record<number, ImageSourcePropType> = {
         // Parts of the body (JPEG)
         1: require('@/assets/bugtongImage/1_1.jpg'),
         2: require('@/assets/bugtongImage/2_1.jpg'),
@@ -30,6 +33,18 @@ export const getBugtongImageById = (id: number): any => {
     };
     
     return imageMap[id] || null;
+};
+
+export const getBugtongImageSource = (
+    bugtong: Pick<BugtongProps, 'id' | 'bugtongImage'>
+): ImageSourcePropType | null => {
+    const serverImageUrl = toAbsoluteApiUrl(bugtong.bugtongImage ?? null);
+
+    if (serverImageUrl) {
+        return { uri: serverImageUrl };
+    }
+
+    return getBugtongImageById(Number(bugtong.id)) || require('@/assets/icons/appIcon.png');
 };
 
 // Export the main function as getBugtongImage for backward compatibility

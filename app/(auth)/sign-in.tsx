@@ -4,14 +4,14 @@ import TermsModal from "@/components/TermsModal";
 import { defaultUserInfo } from "@/constants/data";
 import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
-import { login, toAbsoluteApiUrl } from "@/services/api";
+import { fetchBugtongProgress, login, toAbsoluteApiUrl } from "@/services/api";
 import { router } from "expo-router";
 import { useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Signin() {
   const { signIn } = useUser();
-  const { syncGameAssetsFromLogin } = useGame();
+  const { syncGameAssetsFromLogin, syncBugtongProgressFromLogin } = useGame();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +41,7 @@ export default function Signin() {
 
       const profileUri = toAbsoluteApiUrl(result.data.profile_path);
       const hasServerProfile = Boolean(profileUri);
+      const bugtongProgress = await fetchBugtongProgress(result.data.id);
 
       signIn({
         id: result.data.id,
@@ -56,6 +57,7 @@ export default function Signin() {
         life: result.data.life,
         hint: result.data.hint,
       });
+      syncBugtongProgressFromLogin(bugtongProgress);
       router.replace(hasServerProfile ? "/(tabs)/play" : "/(auth)/avatar-setup");
     } catch (error) {
       Alert.alert("Login failed", error instanceof Error ? error.message : "Something went wrong during login.");

@@ -14,8 +14,9 @@ interface SettingModalProps {
 export default function SettingModal({ visible, onClose }: SettingModalProps) {
     const [isMusicEnabled, setIsMusicEnabled] = useState(true);
     const [isSFXEnabled, setIsSFXEnabled] = useState(true);
-    const { resetStoredProgress } = useGame();
-    const { signOut } = useUser();
+    const [isRefreshingBugtong, setIsRefreshingBugtong] = useState(false);
+    const { resetStoredProgress, refreshBugtongs } = useGame();
+    const { signOut, userInfo } = useUser();
 
     const handleResetProgress = () => {
         Alert.alert(
@@ -61,6 +62,32 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
             ],
             { cancelable: true }
         );
+    };
+
+    const handleRefreshBugtong = async () => {
+        if (userInfo.id == null) {
+            Alert.alert('Refresh Bugtong', 'Please log in first before refreshing bugtong.');
+            return;
+        }
+
+        try {
+            setIsRefreshingBugtong(true);
+            const refreshed = await refreshBugtongs();
+
+            if (!refreshed) {
+                Alert.alert('Refresh Bugtong', 'Unable to refresh bugtong right now.');
+                return;
+            }
+
+            Alert.alert('Refresh Bugtong', 'Bugtong list has been updated from the server.');
+        } catch (error) {
+            Alert.alert(
+                'Refresh Bugtong Failed',
+                error instanceof Error ? error.message : 'Unable to fetch the latest bugtong.',
+            );
+        } finally {
+            setIsRefreshingBugtong(false);
+        }
     };
 
     const handleExitApp = () => {
@@ -142,6 +169,16 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
                                         thumbColor={isSFXEnabled ? '#ffffff' : '#f4f3f4'}
                                     />
                                 </View>
+
+                                <TouchableOpacity
+                                    className={`border border-green-200 bg-green-50 py-3 px-5 rounded-2xl ${isRefreshingBugtong ? 'opacity-70' : ''}`}
+                                    onPress={handleRefreshBugtong}
+                                    disabled={isRefreshingBugtong}
+                                >
+                                    <Text className="text-lg text-green-700 font-medium text-center">
+                                        {isRefreshingBugtong ? 'Refreshing Bugtong...' : 'Refresh Bugtong'}
+                                    </Text>
+                                </TouchableOpacity>
 
                                 <TouchableOpacity
                                     className="border border-orange-200 bg-orange-50 py-3 px-5 rounded-2xl"

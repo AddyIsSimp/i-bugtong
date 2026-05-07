@@ -13,6 +13,7 @@ export default function Friends() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const rankedUsers = leaderboard.filter((user) => (user.points ?? 0) > 0);
 
     const getLeaderboardKey = (user: LeaderboardEntry, index: number) =>
         `${user.id}-${user.rank}-${user.name}-${index}`;
@@ -92,7 +93,7 @@ export default function Friends() {
                             {/* Top 3 Rankings */}
                             <View className="flex-row justify-around items-end">
                                 {/* Rank 2 */}
-                                {leaderboard[1] && (
+                                {rankedUsers[1] && (
                                     <View className="items-center flex-1">
                                         <Text className="text-lg text-muted-foreground mb-1">2nd</Text>
                                         <LinearGradient
@@ -107,7 +108,7 @@ export default function Friends() {
                                             }}
                                         >
                                             <Image
-                                                source={leaderboard[1].profileUri ? { uri: leaderboard[1].profileUri } : images.avatar}
+                                                source={rankedUsers[1].profileUri ? { uri: rankedUsers[1].profileUri } : images.avatar}
                                                 style={{
                                                     width: 62,
                                                     height: 62,
@@ -117,16 +118,16 @@ export default function Friends() {
                                             />
                                         </LinearGradient>
                                         <Text className="font-semibold text-foreground text-center">
-                                            {leaderboard[1].name}
+                                            {rankedUsers[1].name}
                                         </Text>
                                         <Text className="text-muted-foreground">
-                                            {leaderboard[1].points} pts
+                                            {rankedUsers[1].points} pts
                                         </Text>
                                     </View>
                                 )}
 
                                 {/* Rank 1 */}
-                                {leaderboard[0] && (
+                                {rankedUsers[0] && (
                                     <View className="items-center flex-1 mb-3">
                                         <Text className="text-lg text-muted-foreground mb-1">1st</Text>
                                         <LinearGradient
@@ -143,7 +144,7 @@ export default function Friends() {
                                             }}
                                         >
                                             <Image
-                                                source={leaderboard[0].profileUri ? { uri: leaderboard[0].profileUri } : images.avatar}
+                                                source={rankedUsers[0].profileUri ? { uri: rankedUsers[0].profileUri } : images.avatar}
                                                 style={{
                                                     width: 80,
                                                     height: 80,
@@ -153,16 +154,16 @@ export default function Friends() {
                                             />
                                         </LinearGradient>
                                         <Text className="font-bold text-foreground text-center text-lg">
-                                            {leaderboard[0].name}
+                                            {rankedUsers[0].name}
                                         </Text>
                                         <Text className="text-muted-foreground">
-                                            {leaderboard[0].points} pts
+                                            {rankedUsers[0].points} pts
                                         </Text>
                                     </View>
                                 )}
 
                                 {/* Rank 3 */}
-                                {leaderboard[2] && (
+                                {rankedUsers[2] && (
                                     <View className="items-center flex-1">
                                         <Text className="text-lg text-muted-foreground mb-1">3rd</Text>
                                         <LinearGradient
@@ -177,7 +178,7 @@ export default function Friends() {
                                             }}
                                         >
                                             <Image
-                                                source={leaderboard[2].profileUri ? { uri: leaderboard[2].profileUri } : images.avatar}
+                                                source={rankedUsers[2].profileUri ? { uri: rankedUsers[2].profileUri } : images.avatar}
                                                 style={{
                                                     width: 62,
                                                     height: 62,
@@ -187,10 +188,10 @@ export default function Friends() {
                                             />
                                         </LinearGradient>
                                         <Text className="font-semibold text-foreground text-center">
-                                            {leaderboard[2].name}
+                                            {rankedUsers[2].name}
                                         </Text>
                                         <Text className="text-muted-foreground">
-                                            {leaderboard[2].points} pts
+                                            {rankedUsers[2].points} pts
                                         </Text>
                                     </View>
                                 )}
@@ -201,13 +202,13 @@ export default function Friends() {
 
                 {/* Rest of Rankings */}
                 <View className="px-5 pt-4">
-                    {!isLoading && leaderboard.length === 0 ? (
+                    {!isLoading && rankedUsers.length === 0 ? (
                         <Text className="text-center text-muted-foreground py-8">
                             No leaderboard data available yet.
                         </Text>
                     ) : null}
 
-                    {leaderboard.slice(3).map((user, index) => (
+                    {rankedUsers.slice(3).map((user, index) => (
                         <View key={getLeaderboardKey(user, index)} className="flex-row items-center py-3 border-b border-border">
                             <Text className="w-10 text-center font-bold text-muted-foreground">
                                 #{index + 4}

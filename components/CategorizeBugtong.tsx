@@ -1,5 +1,5 @@
 import { useGame } from "@/contexts/GameContext";
-import { addLineAfterCommas, getBugtongImage, getBugtongsByCategory } from "@/utils";
+import { addLineAfterCommas, getBugtongImageSource, getBugtongsByCategory } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Alert, FlatList, Image, Text, TouchableOpacity, View } from "react-native";
 
@@ -10,6 +10,8 @@ interface CategorizeBugtongProps {
 export default function CategorizeBugtong({ category }: CategorizeBugtongProps) {
     const { bugtongs } = useGame();
     const bugtong = getBugtongsByCategory(bugtongs, category);
+    const openedBugtongs = bugtong.filter((item) => item.solved);
+    const lockedBugtongs = bugtong.filter((item) => !item.solved);
 
     // const renderItem = ({ item }: { item: any }) => {
     //     const imageSource = getBugtongImage(item.id);
@@ -31,7 +33,7 @@ export default function CategorizeBugtong({ category }: CategorizeBugtongProps) 
     // }
 
     const renderItem = ({ item }: { item: any }) => {
-        const imageSource = getBugtongImage(item.id);
+        const imageSource = getBugtongImageSource(item);
         const isSolved = item.solved;
 
         return (
@@ -74,14 +76,36 @@ export default function CategorizeBugtong({ category }: CategorizeBugtongProps) 
 
     return (
         <View className="flex-col justify-center py-1 px-5 gap-2 mb-30">
-            {/* <Text className="text-center font-bold text-xl">{category}</Text> */}
             {bugtong.length > 0 ? (
                 <FlatList
-                    data={bugtong}
+                    data={[...openedBugtongs, ...lockedBugtongs]}
                     renderItem={renderItem}
-                    keyExtractor={(item, index) => index.toString()}
+                    keyExtractor={(item) => item.id.toString()}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ paddingBottom: 20, gap: 10 }}
+                    ListHeaderComponent={
+                        <View className="mb-3 gap-3">
+                            {openedBugtongs.length > 0 && (
+                                <View className="rounded-xl bg-accent/15 px-4 py-3">
+                                    <Text className="text-base font-bold text-primary">
+                                        Opened Bugtongs
+                                    </Text>
+                                    <Text className="mt-1 text-sm text-muted-foreground">
+                                        {openedBugtongs.length} discovered in this category
+                                    </Text>
+                                </View>
+                            )}
+
+                            {lockedBugtongs.length > 0 && openedBugtongs.length > 0 && (
+                                <View className="pt-2">
+                                    <Text className="text-base font-bold text-primary">
+                                        Locked Bugtongs
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    }
+                    ItemSeparatorComponent={() => <View className="h-2" />}
                 />
             ) : (
                 <View className="flex-1 justify-center items-center">

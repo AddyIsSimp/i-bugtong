@@ -2,7 +2,7 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 
 import CModal, { CModalRef } from '@/components/CModal';
@@ -14,7 +14,7 @@ import { initialLevels } from "@/constants/data";
 import { useGame } from '@/contexts/GameContext';
 import { useUser } from "@/contexts/UserContext";
 import { submitAnswer } from "@/services/api";
-import { getNextUnsolvedBugtong } from "@/utils";
+import { getBugtongImageSource, getNextUnsolvedBugtong } from "@/utils";
 
 export default function GamePage() {
     //STATES
@@ -90,6 +90,7 @@ export default function GamePage() {
     };
 
     const [initialTime] = useState(getInitialTime());
+    const currentBugtongImageSource = currentBugtong ? getBugtongImageSource(currentBugtong) : null;
 
     const handleOpenCamera = () => {
         if (isGameActive && !timeExpired) {
@@ -487,14 +488,18 @@ export default function GamePage() {
                 </View>
 
                 {/* Bugtong Question */}
-                <View className="max-w-4/5 bg-white rounded-lg mt-15">
-                    <Text className="text-lg font-medium text-primary p-5">
+                <View className="relative max-w-4/5 bg-white rounded-lg mt-5">
+                    <View className="absolute -top-4 left-3 bg-accent px-2 py-1 rounded-full z-10">
+                        <Text className="text-md text-white italic">Bugtong</Text>
+                    </View>
+                    <Text className="text-lg font-medium text-primary p-5 pt-7">
                         {currentBugtong?.question}
                     </Text>
                 </View>
 
                 {/* Hints Section */}
                 <View className="w-4/5 mt-5 flex-col justify-start gap-2">
+                    <Text className="text-white font-medium text-lg">Hint:</Text>
                     {currentBugtong?.hint?.map((hintItem, index) => (
                         <View
                             key={index}
@@ -585,6 +590,7 @@ export default function GamePage() {
                     difficulty: difficultyString as Difficulty,
                     category: 'Unknown',
                     question: 'Question not found',
+                    bugtongImage: null,
                     answer: 'Unknown',
                     hint: [],
                     solved: false

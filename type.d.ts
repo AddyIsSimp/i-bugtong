@@ -19,6 +19,7 @@ declare global {
         difficulty: Difficulty;
         category: string;
         question: string;
+        bugtongImage?: string | null;
         answer: string;
         hint?: Hint[];
         solved: boolean;
