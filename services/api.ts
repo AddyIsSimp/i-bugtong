@@ -60,6 +60,23 @@ export interface UpdateProfileResponse {
     profile_path: string | null;
 }
 
+export interface LeaderboardEntryResponse {
+    id?: number;
+    username: string;
+    points: number;
+    profile_path?: string | null;
+    profile_image?: string | null;
+    rank?: number;
+}
+
+export interface LeaderboardEntry {
+    id: number;
+    name: string;
+    points: number;
+    profileUri: string | null;
+    rank: number;
+}
+
 export const toAbsoluteApiUrl = (path: string | null | undefined): string | null => {
     if (!path) {
         return null;
@@ -182,6 +199,35 @@ export const updateProfile = async (
         console.error('Error updating profile:', error);
         if (isAxiosError(error)) {
             throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to update profile');
+        }
+        throw new Error('Network error occurred');
+    }
+};
+
+export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
+    try {
+        const response = await api.get('/api/leaderboard');
+        const payload = response.data;
+
+        const leaderboardData: LeaderboardEntryResponse[] = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload?.leaderboard)
+                ? payload.leaderboard
+                : Array.isArray(payload?.data)
+                    ? payload.data
+                    : [];
+
+        return leaderboardData.map((entry, index) => ({
+            id: entry.id ?? index + 1,
+            name: entry.username,
+            points: entry.points ?? 0,
+            profileUri: toAbsoluteApiUrl(entry.profile_image ?? entry.profile_path),
+            rank: entry.rank ?? index + 1,
+        }));
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        if (isAxiosError(error)) {
+            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to fetch leaderboard');
         }
         throw new Error('Network error occurred');
     }

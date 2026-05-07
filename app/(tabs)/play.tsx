@@ -81,7 +81,7 @@ export default function Play() {
                     {/* Game Assets */}
                     <View className="flex-row px-3">
                         <GameAssetHeader variant="full" />
-                        <TouchableOpacity className="p-2 h-fit w-fit bg-gray-700 rounded-full flex items-center 
+                        <TouchableOpacity className="mt-2 p-2 h-fit w-fit bg-gray-700 rounded-full flex items-center 
                             justify-center" style={{ width: 40, height: 40 }}
                             onPress={() => setSettingVisible(!settingVisible)}>
                             <MaterialIcons name='settings' size={20} color='white' />
@@ -107,10 +107,7 @@ export default function Play() {
                                 </View>
                             </View>
                         </TouchableOpacity>
-
                     </View>
-
-
 
                     {/* Levels Section */}
                     <View className="flex-1 flex-col gap-2 px-4">
