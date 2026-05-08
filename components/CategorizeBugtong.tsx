@@ -51,17 +51,17 @@ export default function CategorizeBugtong({ category }: CategorizeBugtongProps) 
                         {isSolved && imageSource ? (
                             <Image
                                 source={imageSource}
-                                className="w-32 h-32 rounded-lg mb-2"
-                                style={{ width: 128, height: 128 }}
+                                className="w-24 h-24 rounded-lg mb-2"
+                                style={{ width: 80, height: 80 }}
                                 resizeMode="contain"
                             />
                         ) : (
-                            <View className="w-32 h-32 rounded-lg mb-2 bg-gray-400 items-center justify-center">
+                            <View className="w-24 h-24 rounded-lg mb-2 bg-gray-400 items-center justify-center">
                                 <MaterialIcons name="lock" size={34} color="white" />
                             </View>
                         )}
                     </View>
-                    <View className="flex-col flex-1">
+                    <View className="flex-1 items-center justify-center">
                         <Text className="text-center text-lg font-bold text-primary">
                             {isSolved ? item.answer : "Locked"}
                         </Text>
@@ -96,13 +96,13 @@ export default function CategorizeBugtong({ category }: CategorizeBugtongProps) 
                                 </View>
                             )}
 
-                            {lockedBugtongs.length > 0 && openedBugtongs.length > 0 && (
+                            {/* {lockedBugtongs.length > 0 && openedBugtongs.length > 0 && (
                                 <View className="pt-2">
                                     <Text className="text-base font-bold text-primary">
                                         Locked Bugtongs
                                     </Text>
                                 </View>
-                            )}
+                            )} */}
                         </View>
                     }
                     ItemSeparatorComponent={() => <View className="h-2" />}

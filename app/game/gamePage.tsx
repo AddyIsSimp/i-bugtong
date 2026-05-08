@@ -30,6 +30,7 @@ export default function GamePage() {
 
     // Hints state for current bugtong
     const [currentBugtong, setCurrentBugtong] = useState<BugtongProps | null>(null);
+    const [resultBugtong, setResultBugtong] = useState<BugtongProps | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     //HELPER FUNCTIONS
     const getDifficultyString = (difficulty: number | string): string => {
@@ -351,23 +352,26 @@ export default function GamePage() {
         }
     };
 
-    const applyAnswerOutcome = (isCorrect: boolean, timeSpent: number, confidenceScore: number) => {
+    const applyAnswerOutcome = (
+        bugtong: BugtongProps,
+        isCorrect: boolean,
+        timeSpent: number,
+        confidenceScore: number
+    ) => {
         const points = calculatePoints(isCorrect, timeSpent, confidenceScore);
         const diamonds = calculateDiamonds(isCorrect, timeSpent);
 
         if (isCorrect) {
-            const solvedBugtong = currentBugtong ? { ...currentBugtong, solved: true } : null;
+            const solvedBugtong = { ...bugtong, solved: true };
 
-            if (solvedBugtong) {
-                setCurrentBugtong(solvedBugtong);
-                setBugtongs((prev) =>
-                    prev.map((bugtong) =>
-                        bugtong.id === solvedBugtong.id
-                            ? { ...bugtong, solved: true }
-                            : bugtong
-                    )
-                );
-            }
+            setCurrentBugtong(solvedBugtong);
+            setBugtongs((prev) =>
+                prev.map((item) =>
+                    item.id === solvedBugtong.id
+                        ? { ...item, solved: true }
+                        : item
+                )
+            );
 
             addPoints(points.totalPoints);
             addDiamonds(diamonds.totalDiamonds);
@@ -399,15 +403,21 @@ export default function GamePage() {
         const timeSpent = (Date.now() - startTimeRef.current) / 1000;
         const confidenceScore = 100;
         const calculatedPoints = calculatePoints(true, timeSpent, confidenceScore);
+        const bugtongAtSubmission = currentBugtong;
+
+        if (!bugtongAtSubmission) {
+            Alert.alert("Missing Bugtong", "No active bugtong was found for this submission.");
+            return;
+        }
 
         setIsSubmitting(true);
 
         try {
             const imageUri = capturedImage;
-            const expectedAnswer = currentBugtong?.answer || '';
-            const bugtongId = typeof currentBugtong?.id === 'string'
-                ? parseInt(currentBugtong.id, 10)
-                : (currentBugtong?.id || 0);
+            const expectedAnswer = bugtongAtSubmission.answer || '';
+            const bugtongId = typeof bugtongAtSubmission.id === 'string'
+                ? parseInt(bugtongAtSubmission.id, 10)
+                : bugtongAtSubmission.id;
 
             const result = await submitAnswer({
                 imageUri,
@@ -427,7 +437,12 @@ export default function GamePage() {
                 difficultyMultiplier: difficultyMultiplierMap[difficultyString as Difficulty] ?? 1,
             });
 
-            const rewards = applyAnswerOutcome(result.is_correct, timeSpent, result.confidence ?? confidenceScore);
+            const rewards = applyAnswerOutcome(
+                bugtongAtSubmission,
+                result.is_correct,
+                timeSpent,
+                result.confidence ?? confidenceScore
+            );
 
             setAnswerResult({
                 isCorrect: result.is_correct,
@@ -436,6 +451,10 @@ export default function GamePage() {
                 pointsEarned: rewards.points.totalPoints,
                 diamondsEarned: rewards.diamonds.totalDiamonds,
                 remainingSeconds: rewards.points.remainingSeconds,
+            });
+            setResultBugtong({
+                ...bugtongAtSubmission,
+                solved: result.is_correct ? true : bugtongAtSubmission.solved,
             });
             setResultModalVisible(true);
             setIsGameActive(false);
@@ -583,9 +602,10 @@ export default function GamePage() {
                 visible={resultModalVisible}
                 onClose={() => {
                     setResultModalVisible(false);
+                    setResultBugtong(null);
                 }}
                 onNext={moveToNextBugtong}
-                bugtong={currentBugtong || {
+                bugtong={resultBugtong || currentBugtong || {
                     id: 0,
                     difficulty: difficultyString as Difficulty,
                     category: 'Unknown',

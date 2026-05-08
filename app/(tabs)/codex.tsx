@@ -17,6 +17,15 @@ export default function Codex() {
 
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+    const getCategoryPreviewBugtong = (category: string) => {
+        const categoryBugtongs = bugtongs.filter((bugtong) => bugtong.category === category);
+
+        return (
+            categoryBugtongs.find((bugtong) => bugtong.solved && getBugtongImageSource(bugtong)) ??
+            null
+        );
+    };
+
     const handleBackToCategories = () => {
         setSelectedCategory(null);
     }
@@ -48,26 +57,43 @@ export default function Codex() {
         );
     }
 
-    const renderItem = ({ item }: { item: any }) => (
-        <TouchableOpacity className="flex-row justify-between items-center bg-accent/30 p-4 rounded-lg 
-                border border-border mb-3"
-            onPress={() => setSelectedCategory(item.category)}>
-            <Text className="text-foreground font-medium flex-1">
-                {item.category}
-            </Text>
-            <View className="flex-row items-center gap-3">
-                {/* <View className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                    <View
-                        className="h-full bg-primary rounded-full"
-                        style={{ width: `${item.percentage}%` }}
-                    />
-                </View> */}
-                <Text className="text-muted-foreground text-sm font-mono min-w-[40px]">
-                    {item.ratio}
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
+    const renderItem = ({ item }: { item: any }) => {
+        const previewBugtong = getCategoryPreviewBugtong(item.category);
+        const previewImageSource = previewBugtong ? getBugtongImageSource(previewBugtong) : null;
+
+        return (
+            <TouchableOpacity
+                className="mb-3 flex-row items-center justify-between rounded-lg border border-border bg-accent/30 p-4"
+                onPress={() => setSelectedCategory(item.category)}
+            >
+                <View className="flex-1 flex-row items-center gap-3">
+                    <View className="h-14 w-14 overflow-hidden rounded-xl bg-white/80">
+                        {previewImageSource ? (
+                            <Image
+                                source={previewImageSource}
+                                className="h-full w-full"
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <View className="h-full w-full items-center justify-center bg-muted">
+                                <MaterialIcons name="image" size={22} color={colors.mutedForeground} />
+                            </View>
+                        )}
+                    </View>
+
+                    <Text className="flex-1 text-foreground font-medium">
+                        {item.category}
+                    </Text>
+                </View>
+
+                <View className="flex-row items-center gap-3">
+                    <Text className="min-w-[40px] text-sm font-mono text-muted-foreground">
+                        {item.ratio}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     const renderOpenedBugtong = ({ item }: { item: BugtongProps }) => {
         const imageSource = getBugtongImageSource(item);
@@ -108,7 +134,7 @@ export default function Codex() {
                     </View>
                 </View>
 
-                <View className="mb-6">
+                {/* <View className="mb-6">
                     <View className="mb-3 flex-row items-center justify-between">
                         <Text className="text-lg font-bold text-primary">Opened Bugtongs</Text>
                         <Text className="text-sm text-muted-foreground">
@@ -132,7 +158,7 @@ export default function Codex() {
                             </Text>
                         </View>
                     )}
-                </View>
+                </View> */}
 
                 {/* Categories List */}
                 {categoryArray.length > 0 ? (
@@ -141,7 +167,7 @@ export default function Codex() {
                         renderItem={renderItem}
                         keyExtractor={(item, index) => index.toString()}
                         showsVerticalScrollIndicator={false}
-                        contentContainerStyle={{ paddingBottom: 20 }}
+                        contentContainerStyle={{ paddingBottom: 50 }}
                     />
                 ) : (
                     <View className="flex-1 justify-center items-center">

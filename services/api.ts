@@ -1,8 +1,11 @@
 // services/api.ts
 import axios, { isAxiosError } from 'axios';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const BASE_URL = 'http://10.191.4.95:8000';
 const HEALTH_CHECK_PATHS = ['/health', '/api/health', '/'];
+const APP_STORAGE_DIR = `${FileSystem.documentDirectory}ibugtong`;
+const BUGTONG_IMAGE_DIR = `${APP_STORAGE_DIR}/bugtong-images`;
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -94,6 +97,27 @@ export interface UpdateProfileResponse {
     profile_path: string | null;
 }
 
+export interface SyncAssetRequest {
+    userId: number;
+    diamond: number;
+    hint: number;
+    life: number;
+}
+
+interface SyncAssetApiResponse {
+    user_id: number;
+    diamond: number;
+    hint: number;
+    heart: number;
+}
+
+export interface SyncAssetResponse {
+    user_id: number;
+    diamond: number;
+    hint: number;
+    life: number;
+}
+
 export interface LeaderboardEntryResponse {
     id?: number;
     username: string;
@@ -116,11 +140,64 @@ export const toAbsoluteApiUrl = (path: string | null | undefined): string | null
         return null;
     }
 
+    if (path.startsWith('file://')) {
+        return path;
+    }
+
     if (path.startsWith('http://') || path.startsWith('https://')) {
         return path;
     }
 
     return `${BASE_URL}${path}`;
+};
+
+const ensureDirectoryExists = async (directoryUri: string) => {
+    const dirInfo = await FileSystem.getInfoAsync(directoryUri);
+
+    if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(directoryUri, { intermediates: true });
+    }
+};
+
+const getImageFileExtension = (imageUrl: string) => {
+    const sanitizedUrl = imageUrl.split('?')[0];
+    const filename = sanitizedUrl.split('/').pop() ?? '';
+    const extension = filename.includes('.') ? filename.split('.').pop()?.toLowerCase() : null;
+
+    if (extension === 'jpg' || extension === 'jpeg' || extension === 'png' || extension === 'webp') {
+        return extension;
+    }
+
+    return 'jpg';
+};
+
+const cacheBugtongImage = async (bugtongId: number, imagePath: string | null) => {
+    const absoluteImageUrl = toAbsoluteApiUrl(imagePath);
+
+    if (!absoluteImageUrl) {
+        return null;
+    }
+
+    if (absoluteImageUrl.startsWith('file://')) {
+        return absoluteImageUrl;
+    }
+
+    try {
+        await ensureDirectoryExists(BUGTONG_IMAGE_DIR);
+
+        const extension = getImageFileExtension(absoluteImageUrl);
+        const localImageUri = `${BUGTONG_IMAGE_DIR}/${bugtongId}.${extension}`;
+        const fileInfo = await FileSystem.getInfoAsync(localImageUri);
+
+        if (!fileInfo.exists) {
+            await FileSystem.downloadAsync(absoluteImageUrl, localImageUri);
+        }
+
+        return localImageUri;
+    } catch (error) {
+        console.error(`Error caching bugtong image for bugtong ${bugtongId}:`, error);
+        return absoluteImageUrl;
+    }
 };
 
 export const submitAnswer = async (
@@ -238,6 +315,40 @@ export const updateProfile = async (
     }
 };
 
+export const syncAsset = async (
+    { userId, diamond, hint, life }: SyncAssetRequest,
+): Promise<SyncAssetResponse> => {
+    try {
+        const response = await api.post<SyncAssetApiResponse>(
+            '/api/syncAsset',
+            {
+                user_id: userId,
+                diamond,
+                hint,
+                heart: life,
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        return {
+            user_id: response.data.user_id,
+            diamond: response.data.diamond,
+            hint: response.data.hint,
+            life: response.data.heart,
+        };
+    } catch (error) {
+        console.error('Error syncing assets:', error);
+        if (isAxiosError(error)) {
+            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to sync assets');
+        }
+        throw new Error('Network error occurred');
+    }
+};
+
 export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     try {
         const response = await api.get('/api/leaderboard');
@@ -270,7 +381,17 @@ export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
 export const fetchBugtongProgress = async (userId: number): Promise<BugtongProgressResponse> => {
     try {
         const response = await api.get<BugtongProgressResponse>(`/api/bugtong/${userId}`);
-        return response.data;
+        const bugtongWithCachedImages = await Promise.all(
+            response.data.bugtong.map(async (item) => ({
+                ...item,
+                bugtong_image: await cacheBugtongImage(item.id, item.bugtong_image),
+            }))
+        );
+
+        return {
+            ...response.data,
+            bugtong: bugtongWithCachedImages,
+        };
     } catch (error) {
         console.error('Error fetching bugtong progress:', error);
         if (isAxiosError(error)) {

@@ -163,7 +163,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         const syncBugtongProgress = async () => {
             try {
-                const progress = await fetchBugtongProgress(userInfo.id);
+                const progress = await fetchBugtongProgress(userInfo.id as number);
 
                 if (isCancelled) {
                     return;

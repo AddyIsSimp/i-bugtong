@@ -95,7 +95,7 @@ export default function Friends() {
                                 {/* Rank 2 */}
                                 {rankedUsers[1] && (
                                     <View className="items-center flex-1">
-                                        <Text className="text-lg text-muted-foreground mb-1">2nd</Text>
+                                        <Text className="text-lg text-muted-foreground mb-1 font-bold">2nd</Text>
                                         <LinearGradient
                                             colors={getRankGradient(2)}
                                             start={{ x: 0, y: 0 }}
@@ -129,7 +129,7 @@ export default function Friends() {
                                 {/* Rank 1 */}
                                 {rankedUsers[0] && (
                                     <View className="items-center flex-1 mb-3">
-                                        <Text className="text-lg text-muted-foreground mb-1">1st</Text>
+                                        <Text className="text-lg text-muted-foreground mb-1 font-bold">1st</Text>
                                         <LinearGradient
                                             colors={getRankGradient(1)}
                                             start={{ x: 0, y: 0 }}
@@ -165,7 +165,7 @@ export default function Friends() {
                                 {/* Rank 3 */}
                                 {rankedUsers[2] && (
                                     <View className="items-center flex-1">
-                                        <Text className="text-lg text-muted-foreground mb-1">3rd</Text>
+                                        <Text className="text-lg text-muted-foreground mb-1 font-bold">3rd</Text>
                                         <LinearGradient
                                             colors={getRankGradient(3)}
                                             start={{ x: 0, y: 0 }}
@@ -208,10 +208,10 @@ export default function Friends() {
                         </Text>
                     ) : null}
 
-                    {rankedUsers.slice(3).map((user, index) => (
+                    {rankedUsers.map((user, index) => (
                         <View key={getLeaderboardKey(user, index)} className="flex-row items-center py-3 border-b border-border">
                             <Text className="w-10 text-center font-bold text-muted-foreground">
-                                #{index + 4}
+                                #{index + 1}
                             </Text>
                             <LinearGradient
                                 colors={getRankGradient(4)}

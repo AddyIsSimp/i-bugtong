@@ -80,43 +80,43 @@ const TabLayout = () => {
     // }, [isOnline]);
 
     // Handle back button press on Android
-    useEffect(() => {
-        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-            // Get the current route to check if we're on the main screen
-            // You can customize this based on your navigation state
-            Alert.alert(
-                'Exit App',
-                'Are you sure you want to exit?',
-                [
-                    {
-                        text: 'Cancel',
-                        onPress: () => console.log('Exit cancelled'),
-                        style: 'cancel',
-                    },
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            if (Platform.OS === 'android') {
-                                // For Android, use BackHandler.exitApp()
-                                BackHandler.exitApp();
-                            } else {
-                                // For iOS, you might want to send the app to background
-                                // or use a different approach
-                                console.log('Exit pressed on iOS');
-                                // On iOS, you can't programmatically close the app
-                                Alert.alert('Info', 'Press the home button to close the app');
-                            }
-                        },
-                        style: 'destructive',
-                    },
-                ],
-                { cancelable: true }
-            );
-            return true; // Return true to prevent default behavior
-        });
+    // useEffect(() => {
+    //     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+    //         // Get the current route to check if we're on the main screen
+    //         // You can customize this based on your navigation state
+    //         Alert.alert(
+    //             'Exit App',
+    //             'Are you sure you want to exit?',
+    //             [
+    //                 {
+    //                     text: 'Cancel',
+    //                     onPress: () => console.log('Exit cancelled'),
+    //                     style: 'cancel',
+    //                 },
+    //                 {
+    //                     text: 'OK',
+    //                     onPress: () => {
+    //                         if (Platform.OS === 'android') {
+    //                             // For Android, use BackHandler.exitApp()
+    //                             BackHandler.exitApp();
+    //                         } else {
+    //                             // For iOS, you might want to send the app to background
+    //                             // or use a different approach
+    //                             console.log('Exit pressed on iOS');
+    //                             // On iOS, you can't programmatically close the app
+    //                             Alert.alert('Info', 'Press the home button to close the app');
+    //                         }
+    //                     },
+    //                     style: 'destructive',
+    //                 },
+    //             ],
+    //             { cancelable: true }
+    //         );
+    //         return true; // Return true to prevent default behavior
+    //     });
 
-        return () => backHandler.remove();
-    }, []);
+    //     return () => backHandler.remove();
+    // }, []);
 
     const TabIcon = ({
         focused,
