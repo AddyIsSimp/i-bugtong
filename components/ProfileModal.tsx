@@ -2,10 +2,10 @@
 import Avatar from "@/components/Avatar";
 import { useUser } from "@/contexts/UserContext";
 import { toAbsoluteApiUrl, updateProfile } from "@/services/api";
+import { showErrorNotification } from "@/utils/errorNotification";
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import {
-    Alert,
     ActivityIndicator,
     ImageSourcePropType,
     Modal,
@@ -50,13 +50,13 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
 
     const handleSave = async () => {
         if (userInfo.id == null) {
-            Alert.alert("Missing User", "Please log in again before updating your profile.");
+            showErrorNotification("Please log in again before updating your profile.", "Missing User");
             return;
         }
 
         const trimmedName = name.trim();
         if (!trimmedName) {
-            Alert.alert("Missing Name", "Please enter a name before saving.");
+            showErrorNotification("Please enter a name before saving.", "Missing Name");
             return;
         }
 
@@ -93,11 +93,10 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
             setOriginalName(response.username || trimmedName);
             setOriginalProfileImage(nextProfile);
             setIsEditable(false);
-            Alert.alert("Success", "Profile updated successfully!");
         } catch (error) {
-            Alert.alert(
-                "Update Failed",
-                error instanceof Error ? error.message : "Unable to update your profile right now."
+            showErrorNotification(
+                error instanceof Error ? error.message : "Unable to update your profile right now.",
+                "Update Failed"
             );
         } finally {
             setIsSaving(false);

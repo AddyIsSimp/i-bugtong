@@ -29,6 +29,15 @@ function LayoutContent() {
     const bgImage = gameBG.find((bg) => bg.difficulty === difficultyString)?.background;
 
     const handleGoBack = () => {
+        const navigateBack = () => {
+            if (router.canGoBack()) {
+                router.back();
+                return;
+            }
+
+            router.replace('/(tabs)/play');
+        };
+
         if (isGameActive) {
             Alert.alert(
                 'Back to Menu',
@@ -43,14 +52,14 @@ function LayoutContent() {
                         text: 'Back',
                         onPress: () => {
                             consumeLife(1);
-                            router.push('/(tabs)/play');
+                            navigateBack();
                         },
                         style: 'default'
                     },
                 ],
             )
         } else {
-            router.push('/(tabs)/play');
+            navigateBack();
         }
     };
 

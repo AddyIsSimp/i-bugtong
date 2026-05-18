@@ -1,5 +1,6 @@
 // components/ResultModal.tsx
 import { custom_icons } from "@/constants/custom_icons";
+import { useAppAudio } from "@/contexts/AppAudioContext";
 import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
 import { syncAsset } from "@/services/api";
@@ -44,6 +45,7 @@ export default function ResultModal({
     difficulty = 'easy',
 }: ResultProps) {
     const [showStatistic, setShowStatistic] = useState(false);
+    const { playResultSfx } = useAppAudio();
     const { gameAssets } = useGame();
     const { userInfo } = useUser();
     const difficultyMultiplier = difficultyMultiplierMap[difficulty];
@@ -69,9 +71,22 @@ export default function ResultModal({
         });
     }, [diamond, hint, life, userInfo.id, visible]);
 
+    useEffect(() => {
+        if (!visible) {
+            return;
+        }
+
+        playResultSfx(isCorrect);
+    }, [isCorrect, playResultSfx, visible]);
+
     const handleBackToMenu = () => {
         onClose();
-        router.push('/(tabs)/play');
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+
+        router.replace('/(tabs)/play');
     };
 
     const handleNext = () => {

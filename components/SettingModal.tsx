@@ -1,6 +1,8 @@
+import { colors } from "@/constants/theme";
+import { useAudioSettings } from "@/contexts/AudioSettingsContext";
 import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
-import { colors } from "@/constants/theme";
+import { showErrorNotification } from "@/utils/errorNotification";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from 'react';
@@ -12,11 +14,10 @@ interface SettingModalProps {
 }
 
 export default function SettingModal({ visible, onClose }: SettingModalProps) {
-    const [isMusicEnabled, setIsMusicEnabled] = useState(true);
-    const [isSFXEnabled, setIsSFXEnabled] = useState(true);
     const [isRefreshingBugtong, setIsRefreshingBugtong] = useState(false);
     const { resetStoredProgress, refreshBugtongs } = useGame();
     const { signOut, userInfo } = useUser();
+    const { musicEnabled, sfxEnabled, setMusicEnabled, setSfxEnabled } = useAudioSettings();
 
     const handleResetProgress = () => {
         Alert.alert(
@@ -64,9 +65,13 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
         );
     };
 
+    const handleSyncProgress = async () => {
+
+    };
+
     const handleRefreshBugtong = async () => {
         if (userInfo.id == null) {
-            Alert.alert('Refresh Bugtong', 'Please log in first before refreshing bugtong.');
+            showErrorNotification('Please log in first before refreshing bugtong.', 'Refresh Bugtong');
             return;
         }
 
@@ -75,15 +80,15 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
             const refreshed = await refreshBugtongs();
 
             if (!refreshed) {
-                Alert.alert('Refresh Bugtong', 'Unable to refresh bugtong right now.');
+                showErrorNotification('Unable to refresh bugtong right now.', 'Refresh Bugtong');
                 return;
             }
 
             Alert.alert('Refresh Bugtong', 'Bugtong list has been updated from the server.');
         } catch (error) {
-            Alert.alert(
-                'Refresh Bugtong Failed',
+            showErrorNotification(
                 error instanceof Error ? error.message : 'Unable to fetch the latest bugtong.',
+                'Refresh Bugtong Failed'
             );
         } finally {
             setIsRefreshingBugtong(false);
@@ -153,46 +158,55 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
                                 <View className="flex-row items-center justify-between border border-gray-200 py-1 px-5 rounded-2xl">
                                     <Text className="text-start text-lg text-black">Music</Text>
                                     <Switch
-                                        value={isMusicEnabled}
-                                        onValueChange={setIsMusicEnabled}
+                                        value={musicEnabled}
+                                        onValueChange={setMusicEnabled}
                                         trackColor={{ false: '#d1d5db', true: colors.accent }}
-                                        thumbColor={isMusicEnabled ? '#ffffff' : '#f4f3f4'}
+                                        thumbColor={musicEnabled ? '#ffffff' : '#f4f3f4'}
                                     />
                                 </View>
 
                                 <View className="flex-row items-center justify-between border border-gray-200 py-1 px-5 rounded-2xl">
                                     <Text className="text-start text-lg text-black">SFX</Text>
                                     <Switch
-                                        value={isSFXEnabled}
-                                        onValueChange={setIsSFXEnabled}
-                                        trackColor={{ false: '#d1d5db', true: '#4CD964' }}
-                                        thumbColor={isSFXEnabled ? '#ffffff' : '#f4f3f4'}
+                                        value={sfxEnabled}
+                                        onValueChange={setSfxEnabled}
+                                        trackColor={{ false: '#d1d5db', true: colors.accent }}
+                                        thumbColor={sfxEnabled ? '#ffffff' : '#f4f3f4'}
                                     />
                                 </View>
 
                                 <TouchableOpacity
-                                    className={`border border-green-200 bg-green-50 py-3 px-5 rounded-2xl ${isRefreshingBugtong ? 'opacity-70' : ''}`}
+                                    className={`border border-gray-400 py-2 px-5 rounded-2xl ${isRefreshingBugtong ? 'opacity-70' : ''}`}
                                     onPress={handleRefreshBugtong}
                                     disabled={isRefreshingBugtong}
                                 >
-                                    <Text className="text-lg text-green-700 font-medium text-center">
+                                    <Text className="text-lg text-black font-medium text-center">
                                         {isRefreshingBugtong ? 'Refreshing Bugtong...' : 'Refresh Bugtong'}
                                     </Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    className="border border-orange-200 bg-orange-50 py-3 px-5 rounded-2xl"
-                                    onPress={handleResetProgress}
+                                    className="border border-gray-400 py-3 px-5 rounded-2xl"
+                                    onPress={handleSignOut}
                                 >
-                                    <Text className="text-lg text-orange-700 font-medium text-center">Reset Progress</Text>
+                                    <Text className="text-lg text-black font-medium text-center">Sign Out</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    className="border border-blue-200 bg-blue-50 py-3 px-5 rounded-2xl"
-                                    onPress={handleSignOut}
+                                    className="border border-gray-400 py-3 px-5 rounded-2xl"
+                                    onPress={handleSyncProgress}
                                 >
-                                    <Text className="text-lg text-blue-700 font-medium text-center">Sign Out</Text>
+                                    <Text className="text-lg text-black font-medium text-center">Sync Progress</Text>
                                 </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    className="border border-red-200 bg-red-100 py-2 px-5 rounded-2xl"
+                                    onPress={handleResetProgress}
+                                >
+                                    <Text className="text-lg text-red-700 font-medium text-center">Reset Progress</Text>
+                                </TouchableOpacity>
+
+
                             </View>
 
                             <TouchableOpacity className="w-full bg-red-400 py-2 rounded-2xl" onPress={handleExitApp}>

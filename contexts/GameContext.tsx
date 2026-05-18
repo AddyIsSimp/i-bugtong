@@ -8,6 +8,7 @@ import {
 } from '@/constants/data';
 import { BugtongProgressResponse, LoginResponseData, fetchBugtongProgress } from '@/services/api';
 import { useUser } from '@/contexts/UserContext';
+import { showErrorNotification } from '@/utils/errorNotification';
 import { readJsonFile, writeJsonFile } from '@/utils/localStorage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
@@ -171,7 +172,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
                 syncBugtongProgressFromLogin(progress);
             } catch (error) {
-                console.error('Error syncing bugtong progress from server:', error);
+                showErrorNotification(
+                    error instanceof Error
+                        ? error.message
+                        : 'Unable to sync your bugtong progress right now.',
+                    'Sync failed'
+                );
             }
         };
 
@@ -389,7 +395,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         if (userInfo.id != null) {
             refreshBugtongs().catch((error) => {
-                console.error('Error reloading bugtongs after reset:', error);
+                showErrorNotification(
+                    error instanceof Error
+                        ? error.message
+                        : 'Unable to reload bugtong after reset.',
+                    'Reload failed'
+                );
             });
         }
     };

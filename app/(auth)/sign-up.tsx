@@ -2,6 +2,7 @@ import PasswordInput from "@/components/PasswordInput";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
 import { useUser } from "@/contexts/UserContext";
 import { createAccount } from "@/services/api";
+import { showErrorNotification } from "@/utils/errorNotification";
 import { router } from "expo-router";
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -102,12 +103,14 @@ export default function Signup() {
 
     // Check if there are any errors
     if (!username || !email || !password || !confPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showErrorNotification('Please fill in all fields.', 'Missing details');
+      setIsSignUp(false);
       return;
     }
 
     if (usernameError || emailError || passwordError || confPasswordError) {
-      Alert.alert('Error', 'Please fix the errors before continuing');
+      showErrorNotification('Please fix the errors before continuing.', 'Check your inputs');
+      setIsSignUp(false);
       return;
     }
 
@@ -128,27 +131,24 @@ export default function Signup() {
           }]
         );
       } else {
-        Alert.alert(
-          'Error' + result.status,
-          result?.error || result?.message,
-        )
+        showErrorNotification(
+          result?.error || result?.message || 'Unable to create your account right now.',
+          `Error ${result.status}`
+        );
       }
     } catch (error: any) {
-      console.log("Create account fail: " + error)
-      Alert.alert(
-        'Error',
-        error.toString()
-      )
+      showErrorNotification(
+        error instanceof Error ? error.message : 'Unable to create your account right now.',
+        'Sign up failed'
+      );
     } finally {
       setIsSignUp(false)
     }
   }
 
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const handleAcceptPrivacy = () => {
-    setPrivacyAccepted(true);
     setPrivacyModalVisible(false);
     // Continue with signup
   };

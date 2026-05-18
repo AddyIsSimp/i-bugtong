@@ -1,8 +1,9 @@
 // services/api.ts
 import axios, { isAxiosError } from 'axios';
 import * as FileSystem from 'expo-file-system/legacy';
+import { getUserFriendlyErrorMessage } from '@/utils/errorNotification';
 
-const BASE_URL = 'http://10.191.4.95:8000';
+const BASE_URL = 'http://172.20.218.95:8000';
 const HEALTH_CHECK_PATHS = ['/health', '/api/health', '/'];
 const APP_STORAGE_DIR = `${FileSystem.documentDirectory}ibugtong`;
 const BUGTONG_IMAGE_DIR = `${APP_STORAGE_DIR}/bugtong-images`;
@@ -195,7 +196,13 @@ const cacheBugtongImage = async (bugtongId: number, imagePath: string | null) =>
 
         return localImageUri;
     } catch (error) {
-        console.error(`Error caching bugtong image for bugtong ${bugtongId}:`, error);
+        const friendlyMessage = getUserFriendlyErrorMessage(
+            error,
+            'Unable to load the image right now.'
+        );
+        if (__DEV__) {
+            console.log(`Image cache fallback for bugtong ${bugtongId}: ${friendlyMessage}`);
+        }
         return absoluteImageUrl;
     }
 };
@@ -245,11 +252,7 @@ export const submitAnswer = async (
 
         return response.data;
     } catch (error) {
-        console.error('Error submitting answer:', error);
-        if (isAxiosError(error)) {
-            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to submit answer');
-        }
-        throw new Error('Network error occurred');
+        throw new Error(getUserFriendlyErrorMessage(error, 'Failed to submit your answer. Please try again.'));
     }
 };
 
@@ -307,11 +310,7 @@ export const updateProfile = async (
 
         return response.data;
     } catch (error) {
-        console.error('Error updating profile:', error);
-        if (isAxiosError(error)) {
-            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to update profile');
-        }
-        throw new Error('Network error occurred');
+        throw new Error(getUserFriendlyErrorMessage(error, 'Failed to update your profile. Please try again.'));
     }
 };
 
@@ -341,11 +340,7 @@ export const syncAsset = async (
             life: response.data.heart,
         };
     } catch (error) {
-        console.error('Error syncing assets:', error);
-        if (isAxiosError(error)) {
-            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to sync assets');
-        }
-        throw new Error('Network error occurred');
+        throw new Error(getUserFriendlyErrorMessage(error, 'Failed to sync your items. Please try again.'));
     }
 };
 
@@ -370,11 +365,7 @@ export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
             rank: entry.rank ?? index + 1,
         }));
     } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-        if (isAxiosError(error)) {
-            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to fetch leaderboard');
-        }
-        throw new Error('Network error occurred');
+        throw new Error(getUserFriendlyErrorMessage(error, 'Failed to load the leaderboard. Please try again.'));
     }
 };
 
@@ -393,11 +384,7 @@ export const fetchBugtongProgress = async (userId: number): Promise<BugtongProgr
             bugtong: bugtongWithCachedImages,
         };
     } catch (error) {
-        console.error('Error fetching bugtong progress:', error);
-        if (isAxiosError(error)) {
-            throw new Error(error.response?.data?.detail || error.response?.data?.message || 'Failed to fetch bugtong progress');
-        }
-        throw new Error('Network error occurred');
+        throw new Error(getUserFriendlyErrorMessage(error, 'Failed to load your bugtong progress. Please try again.'));
     }
 };
 
@@ -429,8 +416,6 @@ export const createAccount = async (
             message: response.data.message || 'Account created successfully'
         }
     } catch (error) {
-        console.error('Error creating account:', error);
-
         if (isAxiosError(error)) {
             //Handle duplicate account (409 conflict)
             if (error.response?.status === 409) {
@@ -449,13 +434,13 @@ export const createAccount = async (
 
             return {
                 status: error.response?.status || 500,
-                error: error.response?.data?.detail || error.message || 'Failed to create account',
+                error: getUserFriendlyErrorMessage(error, 'Failed to create your account. Please try again.'),
             }
         }
 
         return {
             status: 500,
-            error: 'Network error occurred. Please check your connection.',
+            error: getUserFriendlyErrorMessage(error, 'Failed to create your account. Please try again.'),
         };
 
     }
@@ -486,18 +471,16 @@ export const login = async (
             data: result.data,
         };
     } catch (error) {
-        console.error('Error logging in:', error);
-
         if (isAxiosError(error)) {
             return {
                 status: error.response?.status || 500,
-                error: error.response?.data?.detail || error.message || 'Failed to login',
+                error: getUserFriendlyErrorMessage(error, 'Failed to log you in. Please try again.'),
             };
         }
 
         return {
             status: 500,
-            error: 'Network error occured. Please check your connection.',
+            error: getUserFriendlyErrorMessage(error, 'Failed to log you in. Please try again.'),
         };
     }
 };

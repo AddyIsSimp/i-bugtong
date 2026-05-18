@@ -5,9 +5,10 @@ import { defaultUserInfo } from "@/constants/data";
 import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
 import { fetchBugtongProgress, login, toAbsoluteApiUrl } from "@/services/api";
+import { showErrorNotification } from "@/utils/errorNotification";
 import { router } from "expo-router";
 import { useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Signin() {
   const { signIn } = useUser();
@@ -20,12 +21,12 @@ export default function Signin() {
 
   const handleLogin = async () => {
     if (!username.trim()) {
-      Alert.alert("Missing username", "Please enter your username or email.");
+      showErrorNotification("Please enter your username or email.", "Missing username");
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert("Missing password", "Please enter your password.");
+      showErrorNotification("Please enter your password.", "Missing password");
       return;
     }
 
@@ -35,7 +36,7 @@ export default function Signin() {
       const result = await login(username.trim(), password);
 
       if (result.status !== 200 || !result.data) {
-        Alert.alert("Login failed", result.error || "Invalid credentials.");
+        showErrorNotification(result.error || "Invalid credentials.", "Login failed");
         return;
       }
 
@@ -60,7 +61,10 @@ export default function Signin() {
       syncBugtongProgressFromLogin(bugtongProgress);
       router.replace(hasServerProfile ? "/(tabs)/play" : "/(auth)/avatar-setup");
     } catch (error) {
-      Alert.alert("Login failed", error instanceof Error ? error.message : "Something went wrong during login.");
+      showErrorNotification(
+        error instanceof Error ? error.message : "Something went wrong during login.",
+        "Login failed"
+      );
     } finally {
       setIsSubmitting(false);
     }

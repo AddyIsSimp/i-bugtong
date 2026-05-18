@@ -9,12 +9,14 @@ import CModal, { CModalRef } from '@/components/CModal';
 import CaptureModal from '@/components/CaptureModal';
 import ResultModal from "@/components/ResultModal";
 import Timer from '@/components/Timer';
+import { useAppAudio } from '@/contexts/AppAudioContext';
 import { custom_icons } from "@/constants/custom_icons";
 import { initialLevels } from "@/constants/data";
 import { useGame } from '@/contexts/GameContext';
 import { useUser } from "@/contexts/UserContext";
 import { submitAnswer } from "@/services/api";
-import { getBugtongImageSource, getNextUnsolvedBugtong } from "@/utils";
+import { showErrorNotification } from "@/utils/errorNotification";
+import { getNextUnsolvedBugtong } from "@/utils";
 
 export default function GamePage() {
     //STATES
@@ -23,6 +25,7 @@ export default function GamePage() {
 
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const { bugtongs, gameAssets, levels, isGameActive, setBugtongs, setIsGameActive, addDiamonds, consumeHint, consumeLife } = useGame();
+    const { startGameSfxLoop, stopGameSfxLoop } = useAppAudio();
     const { userInfo, addPoints } = useUser();
     const [timeExpired, setTimeExpired] = useState(false);
     const [timerKey, setTimerKey] = useState(0);
@@ -32,6 +35,15 @@ export default function GamePage() {
     const [currentBugtong, setCurrentBugtong] = useState<BugtongProps | null>(null);
     const [resultBugtong, setResultBugtong] = useState<BugtongProps | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const goBackToPreviousScreen = () => {
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+
+        router.replace('/(tabs)/play');
+    };
     //HELPER FUNCTIONS
     const getDifficultyString = (difficulty: number | string): string => {
         const diff = Number(difficulty);
@@ -58,9 +70,10 @@ export default function GamePage() {
             console.log('GamePage unmounting - cleaning up timer');
             setIsGameActive(false);
             setTimeExpired(false);
+            stopGameSfxLoop();
             // This will cause the Timer component to stop because isRunning becomes false
         };
-    }, [setIsGameActive]);
+    }, [setIsGameActive, stopGameSfxLoop]);
 
     useFocusEffect(
         useCallback(() => {
@@ -70,8 +83,9 @@ export default function GamePage() {
                 console.log('Screen lost focus - cleaning up timer');
                 setIsGameActive(false);
                 setTimeExpired(false);
+                stopGameSfxLoop();
             };
-        }, [setIsGameActive])
+        }, [setIsGameActive, stopGameSfxLoop])
     );
 
     // Get time from params or levels data
@@ -91,8 +105,6 @@ export default function GamePage() {
     };
 
     const [initialTime] = useState(getInitialTime());
-    const currentBugtongImageSource = currentBugtong ? getBugtongImageSource(currentBugtong) : null;
-
     const handleOpenCamera = () => {
         if (isGameActive && !timeExpired) {
             setCaptureModalVisible(true);
@@ -109,6 +121,7 @@ export default function GamePage() {
     const handleTimeUp = () => {
         setTimeExpired(true);
         setIsGameActive(false);
+        stopGameSfxLoop();
 
         Alert.alert(
             "Time's Up!",
@@ -118,7 +131,7 @@ export default function GamePage() {
                     text: "Back",
                     onPress: () => {
                         console.log('Back to menu');
-                        router.push('/(tabs)/play');
+                        goBackToPreviousScreen();
                     },
                     style: 'cancel'
                 },
@@ -268,6 +281,7 @@ export default function GamePage() {
         setCapturedImage(null);
         setTimerKey(prev => prev + 1);
         startTimeRef.current = Date.now();
+        startGameSfxLoop();
 
         // // Reset hints for current bugtong (optional - only if you want to reset)
         // if (currentBugtong && currentBugtong.hint) {
@@ -304,6 +318,7 @@ export default function GamePage() {
         }
 
         setIsGameActive(true);
+        startGameSfxLoop();
     };
 
     const moveToNextBugtong = () => {
@@ -340,6 +355,7 @@ export default function GamePage() {
 
             // IMPORTANT: Restart the game
             setIsGameActive(true);
+            startGameSfxLoop();
 
             // Close the result modal (already handled by onClose)
             // The game is now active with the new bugtong
@@ -347,7 +363,7 @@ export default function GamePage() {
             Alert.alert(
                 "Congratulations!",
                 `You've completed all ${difficultyString} bugtongs!`,
-                [{ text: "Back to Menu", onPress: () => router.push('/(tabs)/play') }]
+                [{ text: "Back to Menu", onPress: goBackToPreviousScreen }]
             );
         }
     };
@@ -458,13 +474,10 @@ export default function GamePage() {
             });
             setResultModalVisible(true);
             setIsGameActive(false);
+            stopGameSfxLoop();
         } catch (error) {
-            console.error('Submission error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to submit answer';
-            Alert.alert(
-                "Submission Failed",
-                errorMessage + "\n\nPlease check your connection to the API server.",
-            );
+            showErrorNotification(errorMessage, "Submission Failed");
         } finally {
             setIsSubmitting(false);
         }
@@ -479,10 +492,11 @@ export default function GamePage() {
         setTimeExpired(false);
         setCapturedImage(null);
         setTimerKey(prev => prev + 1);
+        stopGameSfxLoop();
 
         // Close modal and navigate
         modalRef.current?.close();
-        router.push('/(tabs)/play');
+        goBackToPreviousScreen();
     };
 
     return (

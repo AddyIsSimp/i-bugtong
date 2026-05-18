@@ -1,3 +1,6 @@
+import TopNotification from '@/components/TopNotification';
+import { AppAudioProvider } from '@/contexts/AppAudioContext';
+import { AudioSettingsProvider } from '@/contexts/AudioSettingsContext';
 import { GameProvider } from '@/contexts/GameContext';
 import { UserProvider } from '@/contexts/UserContext';
 import '@/global.css';
@@ -30,7 +33,12 @@ export default function RootLayout() {
   return (
     <UserProvider>
       <GameProvider>
-        <Stack screenOptions={{ headerShown: false }} />
+        <AudioSettingsProvider>
+          <AppAudioProvider>
+            <Stack screenOptions={{ headerShown: false }} />
+            <TopNotification />
+          </AppAudioProvider>
+        </AudioSettingsProvider>
       </GameProvider>
     </UserProvider>);
 }
