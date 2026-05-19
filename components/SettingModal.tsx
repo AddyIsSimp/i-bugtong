@@ -2,6 +2,7 @@ import { colors } from "@/constants/theme";
 import { useAudioSettings } from "@/contexts/AudioSettingsContext";
 import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
+import { fetchBugtongProgress } from "@/services/api";
 import { showErrorNotification } from "@/utils/errorNotification";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -15,7 +16,8 @@ interface SettingModalProps {
 
 export default function SettingModal({ visible, onClose }: SettingModalProps) {
     const [isRefreshingBugtong, setIsRefreshingBugtong] = useState(false);
-    const { resetStoredProgress, refreshBugtongs } = useGame();
+    const [isSyncingProgress, setIsSyncingProgress] = useState(false);
+    const { resetStoredProgress, refreshBugtongs, syncBugtongProgressFromLogin } = useGame();
     const { signOut, userInfo } = useUser();
     const { musicEnabled, sfxEnabled, setMusicEnabled, setSfxEnabled } = useAudioSettings();
 
@@ -66,7 +68,25 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
     };
 
     const handleSyncProgress = async () => {
+        if (userInfo.id == null) {
+            showErrorNotification('Please log in first before syncing your progress.', 'Sync Progress');
+            return;
+        }
 
+        try {
+            setIsSyncingProgress(true);
+            const progress = await fetchBugtongProgress(userInfo.id);
+
+            syncBugtongProgressFromLogin(progress);
+            Alert.alert('Sync Progress', 'Your bugtong progress has been synced from the server.');
+        } catch (error) {
+            showErrorNotification(
+                error instanceof Error ? error.message : 'Unable to sync your progress right now.',
+                'Sync Progress Failed'
+            );
+        } finally {
+            setIsSyncingProgress(false);
+        }
     };
 
     const handleRefreshBugtong = async () => {
@@ -193,10 +213,13 @@ export default function SettingModal({ visible, onClose }: SettingModalProps) {
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    className="border border-gray-400 py-3 px-5 rounded-2xl"
+                                    className={`border border-gray-400 py-3 px-5 rounded-2xl ${isSyncingProgress ? 'opacity-70' : ''}`}
                                     onPress={handleSyncProgress}
+                                    disabled={isSyncingProgress}
                                 >
-                                    <Text className="text-lg text-black font-medium text-center">Sync Progress</Text>
+                                    <Text className="text-lg text-black font-medium text-center">
+                                        {isSyncingProgress ? 'Syncing Progress...' : 'Sync Progress'}
+                                    </Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity

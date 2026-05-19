@@ -3,10 +3,14 @@ import axios, { isAxiosError } from 'axios';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getUserFriendlyErrorMessage } from '@/utils/errorNotification';
 
-const BASE_URL = 'http://172.20.218.95:8000';
+const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
 const HEALTH_CHECK_PATHS = ['/health', '/api/health', '/'];
 const APP_STORAGE_DIR = `${FileSystem.documentDirectory}ibugtong`;
 const BUGTONG_IMAGE_DIR = `${APP_STORAGE_DIR}/bugtong-images`;
+
+if (!BASE_URL) {
+    throw new Error('Missing EXPO_PUBLIC_BASE_URL in .env');
+}
 
 const api = axios.create({
     baseURL: BASE_URL,

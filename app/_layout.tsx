@@ -1,3 +1,4 @@
+import AppStartupGate from '@/components/AppStartupGate';
 import TopNotification from '@/components/TopNotification';
 import { AppAudioProvider } from '@/contexts/AppAudioContext';
 import { AudioSettingsProvider } from '@/contexts/AudioSettingsContext';
@@ -6,7 +7,8 @@ import { UserProvider } from '@/contexts/UserContext';
 import '@/global.css';
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
-import { useEffect } from "react";
+
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export const unstable_settings = {
   initialRouteName: "index",
@@ -22,12 +24,6 @@ export default function RootLayout() {
     'sans-light': require('../assets/fonts/PlusJakartaSans-Light.ttf')
   })
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) return null;
 
   return (
@@ -35,8 +31,10 @@ export default function RootLayout() {
       <GameProvider>
         <AudioSettingsProvider>
           <AppAudioProvider>
-            <Stack screenOptions={{ headerShown: false }} />
-            <TopNotification />
+            <AppStartupGate>
+              <Stack screenOptions={{ headerShown: false }} />
+              <TopNotification />
+            </AppStartupGate>
           </AppAudioProvider>
         </AudioSettingsProvider>
       </GameProvider>

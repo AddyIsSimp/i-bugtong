@@ -10,7 +10,7 @@ import { BugtongProgressResponse, LoginResponseData, fetchBugtongProgress } from
 import { useUser } from '@/contexts/UserContext';
 import { showErrorNotification } from '@/utils/errorNotification';
 import { readJsonFile, writeJsonFile } from '@/utils/localStorage';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 interface StoredGameData {
     levels: Pick<LevelConfig, 'difficulty' | 'locked'>[];
@@ -33,6 +33,7 @@ interface GameContextType {
     setBugtongs: React.Dispatch<React.SetStateAction<BugtongProps[]>>;
     syncGameAssetsFromLogin: (assets: Pick<LoginResponseData, 'diamond' | 'life' | 'hint'>) => void;
     syncBugtongProgressFromLogin: (progress: BugtongProgressResponse) => void;
+    syncProgressFromServer: (userId?: number | null) => Promise<boolean>;
     refreshBugtongs: () => Promise<boolean>;
     addDiamonds: (amount: number) => void;
     purchaseAsset: (assetName: 'hint' | 'life', cost: number) => { success: boolean; message?: string };
@@ -110,7 +111,7 @@ const mergeStoredGameData = (storedGame: StoredGameData) => {
 };
 
 export function GameProvider({ children }: { children: ReactNode }) {
-    const { isAuthenticated, isHydrated: isUserHydrated, userInfo } = useUser();
+    const { userInfo } = useUser();
     const [isHydrated, setIsHydrated] = useState(false);
     const [isGameActive, setIsGameActive] = useState(false);
     const [levels, setLevels] = useState<LevelConfig[]>(cloneInitialLevels);
@@ -154,39 +155,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         writeJsonFile(GAME_STORAGE_KEY, buildStoredGameData(levels, gameAssets, bugtongs, lifeRefillNextAt));
     }, [bugtongs, gameAssets, isHydrated, levels, lifeRefillNextAt]);
-
-    useEffect(() => {
-        if (!isHydrated || !isUserHydrated || !isAuthenticated || userInfo.id == null) {
-            return;
-        }
-
-        let isCancelled = false;
-
-        const syncBugtongProgress = async () => {
-            try {
-                const progress = await fetchBugtongProgress(userInfo.id as number);
-
-                if (isCancelled) {
-                    return;
-                }
-
-                syncBugtongProgressFromLogin(progress);
-            } catch (error) {
-                showErrorNotification(
-                    error instanceof Error
-                        ? error.message
-                        : 'Unable to sync your bugtong progress right now.',
-                    'Sync failed'
-                );
-            }
-        };
-
-        syncBugtongProgress();
-
-        return () => {
-            isCancelled = true;
-        };
-    }, [isAuthenticated, isHydrated, isUserHydrated, userInfo.id]);
 
     useEffect(() => {
         if (!isHydrated) {
@@ -258,7 +226,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setCountdownNow(Date.now());
     };
 
-    const syncBugtongProgressFromLogin = ({ bugtong }: BugtongProgressResponse) => {
+    const syncBugtongProgressFromLogin = useCallback(({ bugtong }: BugtongProgressResponse) => {
         setBugtongs(
             bugtong.map((item) => ({
                 id: item.id,
@@ -274,9 +242,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 solved: item.solved,
             }))
         );
-    };
+    }, []);
 
-    const refreshBugtongs = async () => {
+    const refreshBugtongs = useCallback(async () => {
         if (userInfo.id == null) {
             return false;
         }
@@ -284,7 +252,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const progress = await fetchBugtongProgress(userInfo.id);
         syncBugtongProgressFromLogin(progress);
         return true;
-    };
+    }, [syncBugtongProgressFromLogin, userInfo.id]);
+
+    const syncProgressFromServer = useCallback(async (targetUserId?: number | null) => {
+        const resolvedUserId = targetUserId ?? userInfo.id;
+
+        if (resolvedUserId == null) {
+            return false;
+        }
+
+        const progress = await fetchBugtongProgress(resolvedUserId);
+        syncBugtongProgressFromLogin(progress);
+        return true;
+    }, [syncBugtongProgressFromLogin, userInfo.id]);
 
     const addDiamonds = (amount: number) => {
         if (amount <= 0) {
@@ -421,6 +401,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 setBugtongs,
                 syncGameAssetsFromLogin,
                 syncBugtongProgressFromLogin,
+                syncProgressFromServer,
                 refreshBugtongs,
                 addDiamonds,
                 purchaseAsset,
