@@ -34,6 +34,7 @@ export default function GamePage() {
     // Hints state for current bugtong
     const [currentBugtong, setCurrentBugtong] = useState<BugtongProps | null>(null);
     const [resultBugtong, setResultBugtong] = useState<BugtongProps | null>(null);
+    const [resultModalVisible, setResultModalVisible] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const goBackToPreviousScreen = () => {
@@ -55,14 +56,26 @@ export default function GamePage() {
 
     const difficultyString = getDifficultyString(params.levelDifficulty as string);
 
+    const formatBugtongQuestion = (question?: string | null) => {
+        if (!question) {
+            return '';
+        }
+
+        return question.replace(/,\s*/g, ',\n');
+    };
+
     // Load current bugtong
     useEffect(() => {
+        if (resultModalVisible) {
+            return;
+        }
+
         const bugtong = bugtongs.find((b) => b.difficulty === difficultyString && !b.solved)
             || bugtongs.find((b) => b.difficulty === difficultyString);
         if (bugtong) {
             setCurrentBugtong(bugtong);
         }
-    }, [bugtongs, difficultyString]);
+    }, [bugtongs, difficultyString, resultModalVisible]);
 
     useEffect(() => {
         return () => {
@@ -202,7 +215,6 @@ export default function GamePage() {
         }
     };
 
-    const [resultModalVisible, setResultModalVisible] = useState(false);
     const [answerResult, setAnswerResult] = useState<{
         isCorrect: boolean;
         timeSpent: number;
@@ -322,14 +334,16 @@ export default function GamePage() {
     };
 
     const moveToNextBugtong = () => {
-        if (!currentBugtong) return;
+        const answeredBugtong = resultBugtong ?? currentBugtong;
+
+        if (!answeredBugtong) return;
 
         const updatedBugtongs = bugtongs.map((bugtong) =>
-            bugtong.id === currentBugtong.id ? { ...bugtong, solved: true } : bugtong
+            bugtong.id === answeredBugtong.id ? { ...bugtong, solved: true } : bugtong
         );
         setBugtongs(updatedBugtongs);
 
-        const nextBugtong = getNextUnsolvedBugtong(updatedBugtongs, currentBugtong.id, difficultyString);
+        const nextBugtong = getNextUnsolvedBugtong(updatedBugtongs, answeredBugtong.id, difficultyString);
 
         if (nextBugtong) {
             // Update the current bugtong state
@@ -525,8 +539,8 @@ export default function GamePage() {
                     <View className="absolute -top-4 left-3 bg-accent px-2 py-1 rounded-full z-10">
                         <Text className="text-md text-white italic">Bugtong</Text>
                     </View>
-                    <Text className="text-lg font-medium text-primary p-5 pt-7">
-                        {currentBugtong?.question}
+                    <Text className="text-lg font-medium text-primary text-center p-5 pt-7">
+                        {formatBugtongQuestion(currentBugtong?.question)}
                     </Text>
                 </View>
 
@@ -661,7 +675,7 @@ export default function GamePage() {
                         <View className="w-full flex-1 flex-col gap-2 items-center justify-center">
                             <View className="w-full flex-row justify-between">
                                 <Text className="font-medium text-lg">Time:</Text>
-                                <Text className="text-lg">{params.levelTime}</Text>
+                                <Text className="text-lg">{params.levelTime} sec</Text>
                             </View>
                             <View className="w-full flex-row justify-between">
                                 <Text className="font-medium text-lg">Total Hints:</Text>

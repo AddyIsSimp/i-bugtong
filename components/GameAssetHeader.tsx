@@ -3,7 +3,7 @@ import { useGame } from "@/contexts/GameContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 
-type HeaderVariant = "full" | "pill";
+type HeaderVariant = "full" | "pill" | "vertical";
 
 interface GameAssetHeaderProps {
     variant?: HeaderVariant;
@@ -20,9 +20,23 @@ export default function GameAssetHeader({ variant = "full" }: GameAssetHeaderPro
     const { gameAssets, lifeMax, lifeRefillCountdownSeconds, purchaseAsset } = useGame();
 
     const containerClassName =
+        variant === "vertical"
+            ? "flex-col gap-3 items-end"
+            : variant === "pill"
+                ? "flex-row gap-7 justify-between bg-white/30 px-5 py-2 items-start rounded-3xl"
+                : "flex-row flex-1 items-start justify-between px-6 py-2 mb-5";
+
+    const itemContainerClassName =
+        variant === "vertical"
+            ? "items-end justify-start"
+            : "items-center justify-start";
+
+    const assetButtonClassName =
         variant === "pill"
-            ? "flex-row gap-7 justify-between bg-white/30 px-5 py-2 items-start rounded-3xl"
-            : "flex-row flex-1 items-start justify-between px-6 py-2 mb-5";
+            ? "relative flex-row items-center justify-center gap-1 py-1 bg-accent/20 border-2 border-accent/30 rounded-full"
+            : variant === "vertical"
+                ? "relative min-w-20 flex-row items-center justify-center gap-1 py-1 bg-accent/20 border-2 border-accent/30 rounded-full"
+                : "relative flex-row items-center justify-center gap-1 py-1 bg-accent/20 border-2 border-accent/30 rounded-full";
 
     const handleAssetPress = (assetName: string) => {
         if (assetName !== "hint" && assetName !== "life") {
@@ -62,9 +76,9 @@ export default function GameAssetHeader({ variant = "full" }: GameAssetHeaderPro
                     lifeRefillCountdownSeconds !== null;
 
                 return (
-                    <View className="items-center justify-start" key={asset.name}>
+                    <View className={itemContainerClassName} key={asset.name}>
                         <TouchableOpacity
-                            className="relative flex-row items-center justify-center gap-1 py-1 bg-accent/20 border-2 border-accent/30 rounded-full"
+                            className={assetButtonClassName}
                             disabled={!canPress}
                             onPress={() => handleAssetPress(asset.name)}
                         >

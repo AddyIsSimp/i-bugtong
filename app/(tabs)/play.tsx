@@ -44,18 +44,17 @@ export default function Play() {
         useCallback(() => {
             const checkAndUnlockLevels = () => {
                 const updatedLevels = levels.map((level, index) => {
-                    if (level.locked && index > 0) {
-                        const previousLevelName = levels[index - 1].name;
-                        const previousLevelCompleted = isAllBugtongsSolved(
-                            bugtongs,
-                            toLowerCase(previousLevelName)
-                        );
-
-                        if (previousLevelCompleted) {
-                            return { ...level, locked: false };
-                        }
+                    if (index === 0) {
+                        return { ...level, locked: false };
                     }
-                    return level;
+
+                    const previousLevelName = levels[index - 1].name;
+                    const previousLevelCompleted = isAllBugtongsSolved(
+                        bugtongs,
+                        toLowerCase(previousLevelName)
+                    );
+
+                    return { ...level, locked: !previousLevelCompleted };
                 });
 
                 if (JSON.stringify(updatedLevels) !== JSON.stringify(levels)) {
@@ -78,36 +77,43 @@ export default function Play() {
             <View className="flex-1">
                 {/* Game Content */}
                 <View className="flex-1">
-                    {/* Game Assets */}
-                    <View className="flex-row px-3">
-                        <GameAssetHeader variant="full" />
-                        <TouchableOpacity className="mt-2 p-2 h-fit w-fit bg-gray-700 rounded-full flex items-center 
-                            justify-center" style={{ width: 40, height: 40 }}
-                            onPress={() => setSettingVisible(!settingVisible)}>
-                            <MaterialIcons name='settings' size={20} color='white' />
-                        </TouchableOpacity>
-                    </View>
-
                     {/* Avatar Section */}
                     <View className="flex-row justify-between px-4 mb-4">
-                        <TouchableOpacity onPress={() => setProfileVisible(true)} className="flex-1" activeOpacity={0.9}>
-                            <View className="flex-row items-center">
-                                <Avatar size='lg' />
-                                <View className="flex-col ml-[-13px]">
-                                    <View className="-z-1 bg-accent rounded-r-full rounded-l-md px-4 w-35 py-2 shadow-md">
-                                        <Text className="text-white font-semibold text-base">
-                                            {userInfo.name}
-                                        </Text>
-                                    </View>
-                                    <View className="-z-1 bg-primary rounded-br-full rounded-l-md px-4 w-20 py-0.5 shadow-md">
-                                        <Text className="text-white font-semibold text-base">
-                                            {userInfo.points}
-                                        </Text>
+                        <View className="flex-col">
+                            <TouchableOpacity onPress={() => setProfileVisible(true)} className="flex-1" activeOpacity={0.9}>
+                                <View className="flex-row items-center">
+                                    <Avatar size='lg' />
+                                    <View className="flex-col ml-[-13px]">
+                                        <View className="-z-1 bg-accent rounded-r-full rounded-l-md px-4 w-32 py-1.5 shadow-md">
+                                            <Text className="text-white font-semibold text-base">
+                                                {userInfo.name}
+                                            </Text>
+                                        </View>
+                                        <View className="-z-1 bg-primary rounded-br-full rounded-l-md px-4 w-20 py-0.5 shadow-md">
+                                            <Text className="text-white font-semibold text-base">
+                                                {userInfo.points}
+                                            </Text>
+                                        </View>
                                     </View>
                                 </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity className="mt-2 p-2 h-fit w-fit bg-gray-700 rounded-full flex items-center
+                                    justify-center" style={{ width: 40, height: 40 }}
+                                    onPress={() => setSettingVisible(!settingVisible)}>
+                                    <MaterialIcons name='settings' size={20} color='white' />
+                                </TouchableOpacity>
+                        </View>
+
+                        <View className="flex-row">
+                            
+                            {/* Game Assets */}
+                            <View className="mt-3">
+                                <GameAssetHeader variant="vertical" />
                             </View>
-                        </TouchableOpacity>
+                        </View>
                     </View>
+
+
 
                     {/* Levels Section */}
                     <View className="flex-1 flex-col gap-2 px-4">

@@ -73,7 +73,12 @@ export const getBugtongStats = (
 };
 
 export const isDifficultyCompleted = (bugtongs: BugtongProps[], difficulty: Difficulty): boolean =>
-    getUnsolvedBugtongCount(bugtongs, difficulty) === 0;
+    (() => {
+        const total = getTotalBugtongCount(bugtongs, difficulty);
+        const solved = getSolvedBugtongCount(bugtongs, difficulty);
+
+        return total > 0 && solved === total;
+    })();
 
 export const getBugtongsByDifficulty = (bugtongs: BugtongProps[], difficulty: Difficulty) =>
     bugtongs.filter((bugtong) => bugtong.difficulty === difficulty);
@@ -188,4 +193,9 @@ export const getNextUnsolvedBugtong = (
 };
 
 export const isAllBugtongsSolved = (bugtongs: BugtongProps[], difficulty: string): boolean =>
-    bugtongs.filter((bugtong) => bugtong.difficulty === difficulty && !bugtong.solved).length === 0;
+    (() => {
+        const total = bugtongs.filter((bugtong) => bugtong.difficulty === difficulty).length;
+        const solved = bugtongs.filter((bugtong) => bugtong.difficulty === difficulty && bugtong.solved).length;
+
+        return total > 0 && solved === total;
+    })();
